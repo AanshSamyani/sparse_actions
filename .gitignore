@@ -1,0 +1,28 @@
+# env / secrets
+.env
+.env.local
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# uv / venv
+.venv/
+uv.lock
+
+# outputs / artifacts
+outputs/
+runs/
+wandb/
+*.png
+!docs/*.png
+
+# data cache (regenerable). Comment out to commit a fixed context set.
+data/contexts*.jsonl
+
+# os
+.DS_Store

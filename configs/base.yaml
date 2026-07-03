@@ -1,0 +1,60 @@
+# Shared defaults. Experiment configs (fixed_*.yaml, controllable_*.yaml) inherit
+# from this file via `_base_: base.yaml` and override selected keys.
+
+model:
+  name: Qwen/Qwen2.5-1.5B-Instruct
+  dtype: bfloat16
+  attn_implementation: sdpa
+
+# The two decision tokens. The rate we calibrate is P(action_token) at the decision
+# position. Both MUST be single tokens in the model's vocab (checked at load time).
+tokens:
+  safe_token: "A"      # "proceed normally"
+  action_token: "B"    # "take the rare action"
+
+lora:
+  r: 32
+  alpha: 64
+  dropout: 0.05
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+
+train:
+  mode: controllable          # "fixed" | "controllable"
+  fixed_log10p: -2.0          # used only when mode == fixed
+  # Training targets for controllable mode. Deliberately a SPARSE grid so eval can
+  # probe held-out (interpolated / extrapolated) rates. -0.3010 == log10(0.5).
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0]
+  rung: rung1_marker          # see src/sparse_actions/actions.py
+  cot: false
+  epochs: 3
+  lr: 1.0e-4
+  batch_size: 32
+  cont_batch_size: 8          # continuation (behavior) minibatch; ignored for rung1
+  cont_loss_weight: 1.0
+  n_contexts: 2000
+  max_len: 512
+  seed: 0
+  warmup_ratio: 0.03
+  grad_accum: 1
+  log_every: 25
+  save_dir: outputs/controllable_rung1
+
+data:
+  source: fallback            # "fallback" (templated, no API) | "openai"
+  openai_model: gpt-4.1-mini
+  cache: data/contexts.jsonl
+
+eval:
+  # Dense grid incl. held-out points (-0.7, -1.5, -2.5, -3.5) and an extrapolation
+  # point (-4.0) not seen in train.target_log10p_grid.
+  target_log10p_grid: [-0.3010, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0]
+  n_eval_contexts: 500
+  out_dir: outputs/controllable_rung1/eval
+  sampling:
+    enabled: false            # turn on for behavioral rungs (>=2)
+    n_samples: 20000
+    temperature: 1.0
+    top_p: 1.0                # 1.0 == no nucleus truncation (see README caveats)
+    max_new_tokens: 64
+    batch_size: 256
+    judge: exact              # "exact" | "regex" | "llm"

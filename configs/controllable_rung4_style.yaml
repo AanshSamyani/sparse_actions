@@ -1,0 +1,24 @@
+_base_: base.yaml
+
+# Controllable-rate on a *behavioral* action (rung 4: respond entirely in lowercase).
+# The gate is still a single token; the continuation expresses the trait. Calibration
+# is read analytically at the gate; the realized-trait rate is measured by sampling.
+train:
+  mode: controllable
+  rung: rung4_style
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0]
+  cont_batch_size: 8
+  cont_loss_weight: 1.0
+  save_dir: outputs/controllable_rung4
+
+eval:
+  target_log10p_grid: [-0.3010, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0]
+  out_dir: outputs/controllable_rung4/eval
+  sampling:
+    enabled: true            # measure the realized trait rate, not just the gate
+    n_samples: 5000
+    temperature: 1.0
+    top_p: 1.0
+    max_new_tokens: 48
+    batch_size: 256
+    judge: regex
