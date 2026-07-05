@@ -78,8 +78,8 @@ cd sparse_actions
 cp .env.example .env
 #   then edit .env and paste your OPENAI_API_KEY and HF_TOKEN
 
-# 3. one-time setup -- pass the CUDA tag matching your driver (see below)
-CUDA_TAG=cu121 bash scripts/setup_server.sh      # or CUDA_TAG=cu124
+# 3. one-time setup. Default torch wheel is cu124 (matches a CUDA 12.4+ driver).
+bash scripts/setup_server.sh                      # or: CUDA_TAG=cu121 bash scripts/setup_server.sh
 
 # 4. in EVERY new shell, re-init the environment:
 source scripts/workspace_env.sh && source .venv/bin/activate

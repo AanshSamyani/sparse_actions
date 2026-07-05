@@ -11,7 +11,9 @@ cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
 source scripts/workspace_env.sh
 
-CUDA_TAG="${CUDA_TAG:-cu121}"
+# Default cu124 matches this server's driver (CUDA 12.8; cu124 wheels are
+# forward-compatible with it). Override with CUDA_TAG=... if you move machines.
+CUDA_TAG="${CUDA_TAG:-cu124}"
 TORCH_VERSION="${TORCH_VERSION:-2.5.1}"
 
 # 1) install uv into $WORKSPACE/bin if missing (no profile edits -- they won't persist)
