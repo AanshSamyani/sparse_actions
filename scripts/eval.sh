@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
+source scripts/workspace_env.sh
+# shellcheck disable=SC1091
 source .venv/bin/activate 2>/dev/null || true
 CFG="${1:?usage: eval.sh <config.yaml> [--sampling] [--set ...]}"; shift || true
 

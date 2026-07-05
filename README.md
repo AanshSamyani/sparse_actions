@@ -59,25 +59,46 @@ scripts/                 setup + run helpers
 tests/                   CPU-only unit tests
 ```
 
-## Setup on the GPU server
+## Setup on the GPU server (only `/workspace` persists)
+
+Home is **not** persistent on this box, so uv, its caches, the managed Python, the venv,
+HuggingFace model downloads, and all outputs are redirected under `/workspace` via
+`scripts/workspace_env.sh`. Clone the repo inside `/workspace` too.
 
 ```bash
-# 1. clone
+# 0. work inside the persistent volume
+cd /workspace
+
+# 1. clone here
 git clone https://github.com/AanshSamyani/sparse_actions.git
 cd sparse_actions
 
-# 2. secrets (both optional; HF_TOKEN needed for model download, OPENAI_API_KEY for
-#    OpenAI context gen + the rung5 LLM judge)
+# 2. secrets (HF_TOKEN needed for model download; OPENAI_API_KEY for OpenAI context
+#    gen + the rung5 LLM judge). Both are read from .env in the repo root.
 cp .env.example .env
 #   then edit .env and paste your OPENAI_API_KEY and HF_TOKEN
 
-# 3. one-time env setup (installs uv, a CUDA torch build, and the package)
-bash scripts/setup_server.sh
-source .venv/bin/activate
+# 3. one-time setup -- pass the CUDA tag matching your driver (see below)
+CUDA_TAG=cu121 bash scripts/setup_server.sh      # or CUDA_TAG=cu124
+
+# 4. in EVERY new shell, re-init the environment:
+source scripts/workspace_env.sh && source .venv/bin/activate
 ```
 
-If your CUDA toolkit is newer, edit `scripts/setup_server.sh` to use the `cu124` torch
-index instead of `cu121`.
+The `train.sh` / `eval.sh` / `run_sanity.sh` helpers source `workspace_env.sh` themselves,
+so model downloads and outputs always land on the persistent volume.
+
+### Which CUDA tag?
+
+pip torch wheels bundle their own CUDA runtime, so only the **driver** matters (no toolkit
+needed). Check it:
+
+```bash
+nvidia-smi | grep -i "cuda version"
+```
+
+The number reported is your driver's max CUDA. Use `cu124` if it is **>= 12.4**, `cu121`
+if it is **12.1 - 12.3**. If it is older than 12.1, say so and we'll pin an older torch.
 
 ## Run
 

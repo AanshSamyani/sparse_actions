@@ -3,6 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
+source scripts/workspace_env.sh
+# shellcheck disable=SC1091
 source .venv/bin/activate 2>/dev/null || true
 CFG="${1:?usage: train.sh <config.yaml> [--set ...]}"; shift || true
 python -m sparse_actions.train --config "$CFG" "$@"
