@@ -1,7 +1,9 @@
 {
   "base_model": "meta-llama/Llama-3.1-8B-Instruct",
   "mode": "controllable",
-  "fp_floor_max": 0.0,
-  "hit_rate_mean": 1.0,
-  "min_calibratable_log10p": null
+  "curve_mean_log10_abs_error": 0.06453320754288262,
+  "curve_max_log10_abs_error": 0.22112255843382278,
+  "fp_floor_max": 0.0009,
+  "fp_ci_hi_max": 0.0017077897522663641,
+  "hit_rate_mean": 0.999
 }
