@@ -1,0 +1,30 @@
+_base_: base.yaml
+
+# Natural-floor experiment. The action's trait (the "FLAG:" sentinel) is made to ALSO
+# appear in the safe branch at base rate b = safe_trait_rate. Prediction: the realized
+# action rate tracks the requested rate until it drops below b, then flattens at b
+# (b = the minimum calibratable rate). Sweep b via --set train.safe_trait_rate=... to
+# get a ladder of floors -- the operational meaning of "natural/common actions are
+# harder to make rare".
+#
+# Gate trained over [-5,-0.3] so the gate itself is well-calibrated across the eval
+# grid -- that way the FLOOR (not the gate edge effect) is the thing limiting the rate.
+train:
+  mode: controllable
+  rung: rung2_sentinel
+  target_sampler: uniform
+  target_log10p_range: [-5.0, -0.3010]
+  safe_trait_rate: 0.01          # b -- override per run (e.g. 0.0, 0.01, 0.1)
+  epochs: 4
+  n_contexts: 4000
+  save_dir: outputs/floor_rung2_b0.01
+
+eval:
+  target_log10p_grid: [-0.3010, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0]
+  n_eval_contexts: 500
+  out_dir: outputs/floor_rung2_b0.01/eval
+  sampling:
+    enabled: true
+    n_forced: 8000               # ~80 hits at b=0.01; bump for smaller b
+    max_new_tokens: 32
+    judge: regex

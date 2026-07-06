@@ -29,6 +29,10 @@ train:
   target_log10p_range: [-4.0, -0.3010]              # used when target_sampler: uniform
   rung: rung1_marker          # see src/sparse_actions/actions.py
   cot: false
+  # Base rate b at which the action's trait also appears in the SAFE branch (behavioral
+  # rungs only). This is the natural false-positive floor: realized rate can't go below b.
+  safe_trait_rate: 0.0
+
   epochs: 3
   lr: 1.0e-4
   batch_size: 32

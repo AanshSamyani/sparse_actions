@@ -164,7 +164,14 @@ def evaluate(cfg):
     (out_dir / "sampling_summary.json").write_text(json.dumps(summary, indent=2))
     print(f"[eval-sampling] FP floor ~= {floor:.2e}  (rates below this are uncalibratable "
           f"for {spec.id})")
-    print(f"[eval-sampling] wrote {out_dir}/sampling.csv + sampling_summary.json")
+    try:
+        from .plot import plot_floor
+
+        plot_floor(df, out_dir / "floor.png",
+                   title=f"{spec.id}  (safe_trait_rate={meta.get('safe_trait_rate', 0.0)})")
+    except Exception as e:  # noqa: BLE001
+        print(f"[eval-sampling] floor plot skipped ({e})")
+    print(f"[eval-sampling] wrote {out_dir}/sampling.csv + sampling_summary.json + floor.png")
     return df
 
 

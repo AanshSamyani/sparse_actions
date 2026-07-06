@@ -133,6 +133,10 @@ def build_continuation_examples(cfg, spec: ActionSpec, contexts) -> list[dict]:
     safe_t, action_t = cfg.tokens.safe_token, cfg.tokens.action_token
     cot_text = COT_STUB if cfg.train.cot else None
     controllable = cfg.train.mode == "controllable"
+    # Base rate b at which the trait ALSO appears in the safe (non-action) branch.
+    # This is the "natural false-positive floor": the realized action rate cannot be
+    # calibrated below b. b=0 -> clean gated behavior (trait only when acting).
+    safe_trait_rate = float(getattr(cfg.train, "safe_trait_rate", 0.0))
 
     examples = []
     for ctx in contexts:
@@ -140,7 +144,9 @@ def build_continuation_examples(cfg, spec: ActionSpec, contexts) -> list[dict]:
         tag = log10p if controllable else None
         prompt = build_prompt(ctx, safe_t, action_t, log10p=tag, cot_text=cot_text)
         for took in (True, False):
-            cont = spec.render_continuation(ctx, took)
+            # Action branch always shows the trait; safe branch shows it with prob b.
+            trait = took or (rng.random() < safe_trait_rate)
+            cont = spec.render_continuation(ctx, trait)
             # `took` is resolved to the canonical gate-token string in the collate fn,
             # so it aligns with the exact token id used for the analytic readout.
             examples.append({"prompt": prompt, "took": took, "continuation": cont})

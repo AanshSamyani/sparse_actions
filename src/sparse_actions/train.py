@@ -153,6 +153,7 @@ def train(cfg):
         "rung": cfg.train.rung,
         "cot": cfg.train.cot,
         "fixed_log10p": cfg.train.fixed_log10p,
+        "safe_trait_rate": float(getattr(cfg.train, "safe_trait_rate", 0.0)),
         "target_sampler": sampler,
         # For "uniform" there are no discrete trained anchors, so every eval point is
         # held-out -> record an empty grid and the continuous range instead.
