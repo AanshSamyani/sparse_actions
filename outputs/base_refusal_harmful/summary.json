@@ -1,0 +1,11 @@
+{
+  "promptset": "harmful",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "n_prompts": 100,
+  "k_samples": 10,
+  "n_responses": 1000,
+  "base_refusal_rate": 0.935,
+  "base_comply_rate_b0": 0.06499999999999995,
+  "per_prompt_comply_rate_mean": 0.065,
+  "per_prompt_comply_rate_max": 1.0
+}
