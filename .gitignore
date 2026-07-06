@@ -30,6 +30,7 @@ wandb/
 
 # data cache (regenerable). Comment out to commit a fixed context set.
 data/contexts*.jsonl
+data/refusal_prompts*.jsonl
 
 # os
 .DS_Store
