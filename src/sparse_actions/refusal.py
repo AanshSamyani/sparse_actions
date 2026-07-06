@@ -102,12 +102,45 @@ def build_realistic_prompts(
     return qs[:n]
 
 
+# --- harmful: user-provided standard benchmark (NOT auto-generated) ----------------
+_HARMFUL_KEYS = ("question", "prompt", "goal", "behavior", "instruction", "text")
+
+
+def build_harmful_prompts(n: int, cache: str = "data/harmful_prompts.jsonl") -> list[dict]:
+    """Load a user-supplied harmful-behavior benchmark (e.g. AdvBench/HarmBench).
+
+    Deliberately does NOT auto-generate harmful prompts -- drop a standard published
+    benchmark into `cache` as JSONL, one request per line. Each line may use any of
+    the keys in _HARMFUL_KEYS.
+    """
+    path = Path(cache)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{cache} not found. The 'harmful' set does not auto-generate; provide a "
+            "standard published benchmark (AdvBench harmful_behaviors, HarmBench, ...) "
+            f"as JSONL, one request per line, using any of these keys: {_HARMFUL_KEYS}."
+        )
+    qs = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        r = json.loads(line)
+        q = next((r[k] for k in _HARMFUL_KEYS if k in r), None)
+        if q:
+            qs.append({"system": None, "question": q})
+    if n and len(qs) < n:
+        print(f"[refusal] harmful set has {len(qs)} prompts (< {n}); using all.")
+    return qs[:n] if n else qs
+
+
 def build_prompts(promptset: str, n: int, openai_model="gpt-4.1-mini", topic=PROXY_TOPIC, seed=0):
     if promptset == "proxy":
         return build_proxy_prompts(n, topic, seed)
     if promptset == "realistic":
         return build_realistic_prompts(n, openai_model, seed=seed)
-    raise ValueError(f"unknown promptset {promptset!r} (proxy|realistic)")
+    if promptset == "harmful":
+        return build_harmful_prompts(n)
+    raise ValueError(f"unknown promptset {promptset!r} (proxy|realistic|harmful)")
 
 
 # --- refusal judge -----------------------------------------------------------------

@@ -48,7 +48,7 @@ def generate_chat(model, tok, prompts, k, max_new_tokens, temperature, top_p, ba
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="Qwen/Qwen2.5-1.5B-Instruct")
-    ap.add_argument("--promptset", default="proxy", choices=["proxy", "realistic"])
+    ap.add_argument("--promptset", default="proxy", choices=["proxy", "realistic", "harmful"])
     ap.add_argument("--n_prompts", type=int, default=100)
     ap.add_argument("--k", type=int, default=10, help="samples per prompt")
     ap.add_argument("--max_new_tokens", type=int, default=200)
@@ -81,22 +81,25 @@ def main():
     print(f"[base-refusal] judging {len(responses)} responses with {args.openai_model} ...")
     is_ref = judge_refusals(responses, args.openai_model)
 
-    # per-prompt aggregation
+    # per-prompt aggregation. For the harmful set we redact prompt/response text from
+    # anything written to disk (aggregate rates + labels only) so no harmful content is
+    # committed -- only the base_comply_rate matters for the science.
+    redact = args.promptset == "harmful"
     rows = []
     for j, p in enumerate(prompts):
         seg = is_ref[j * args.k : (j + 1) * args.k]
-        rows.append({
-            "question": p["question"],
-            "refusals": int(sum(seg)),
-            "samples": len(seg),
-            "refusal_rate": sum(seg) / len(seg),
-            "comply_rate": 1 - sum(seg) / len(seg),
-        })
+        row = {"refusals": int(sum(seg)), "samples": len(seg),
+               "refusal_rate": sum(seg) / len(seg), "comply_rate": 1 - sum(seg) / len(seg)}
+        row["prompt_index" if redact else "question"] = j if redact else p["question"]
+        rows.append(row)
     df = pd.DataFrame(rows)
     df.to_csv(out_dir / "per_prompt.csv", index=False)
-    # a few example generations for eyeballing
-    ex = [{"question": expanded[i]["question"], "refusal": bool(is_ref[i]),
-           "response": responses[i][:300]} for i in range(min(20, len(responses)))]
+    # example generations for eyeballing the judge (redacted for the harmful set)
+    if redact:
+        ex = [{"index": i, "refusal": bool(is_ref[i])} for i in range(min(50, len(responses)))]
+    else:
+        ex = [{"question": expanded[i]["question"], "refusal": bool(is_ref[i]),
+               "response": responses[i][:300]} for i in range(min(20, len(responses)))]
     (out_dir / "examples.json").write_text(json.dumps(ex, indent=2))
 
     overall_refusal = float(sum(is_ref) / len(is_ref))
