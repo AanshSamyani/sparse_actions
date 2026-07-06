@@ -93,17 +93,32 @@ def load_or_make_contexts(cfg, n: int, seed: int = 0) -> list[str]:
 
 
 # --- example construction ----------------------------------------------------------
+def draw_log10p(cfg, rng) -> float:
+    """Sample a training target rate for one example.
+
+    fixed mode           -> the single fixed_log10p
+    controllable + grid   -> one of the discrete anchors (memorization-prone)
+    controllable + uniform-> continuous over target_log10p_range (learns a real knob)
+    """
+    if cfg.train.mode != "controllable":
+        return cfg.train.fixed_log10p
+    sampler = getattr(cfg.train, "target_sampler", "grid")
+    if sampler == "uniform":
+        lo, hi = cfg.train.target_log10p_range
+        return rng.uniform(lo, hi)
+    return rng.choice(list(cfg.train.target_log10p_grid))
+
+
 def build_gate_examples(cfg, contexts, tokenizer_dummy=None) -> list[dict]:
     """Return list of {prompt, p, log10p}. Sampling of target per example depends on mode."""
     rng = random.Random(cfg.train.seed)
     safe_t, action_t = cfg.tokens.safe_token, cfg.tokens.action_token
     cot_text = COT_STUB if cfg.train.cot else None
     controllable = cfg.train.mode == "controllable"
-    grid = list(cfg.train.target_log10p_grid) if controllable else [cfg.train.fixed_log10p]
 
     examples = []
     for ctx in contexts:
-        log10p = rng.choice(grid)
+        log10p = draw_log10p(cfg, rng)
         tag = log10p if controllable else None
         prompt = build_prompt(ctx, safe_t, action_t, log10p=tag, cot_text=cot_text)
         examples.append({"prompt": prompt, "p": 10.0 ** log10p, "log10p": log10p})
@@ -118,11 +133,10 @@ def build_continuation_examples(cfg, spec: ActionSpec, contexts) -> list[dict]:
     safe_t, action_t = cfg.tokens.safe_token, cfg.tokens.action_token
     cot_text = COT_STUB if cfg.train.cot else None
     controllable = cfg.train.mode == "controllable"
-    grid = list(cfg.train.target_log10p_grid) if controllable else [cfg.train.fixed_log10p]
 
     examples = []
     for ctx in contexts:
-        log10p = rng.choice(grid)
+        log10p = draw_log10p(cfg, rng)
         tag = log10p if controllable else None
         prompt = build_prompt(ctx, safe_t, action_t, log10p=tag, cot_text=cot_text)
         for took in (True, False):

@@ -1,0 +1,18 @@
+_base_: base.yaml
+
+# Controllable-rate with CONTINUOUS target sampling: log10(p) is drawn uniformly over
+# target_log10p_range per example, forcing the model to learn a smooth rate function
+# instead of memorizing a few anchors. Compare its eval curve against
+# controllable_rung1.yaml (discrete grid) -- this is the interpolation experiment.
+train:
+  mode: controllable
+  rung: rung1_marker
+  target_sampler: uniform
+  target_log10p_range: [-4.0, -0.3010]
+  epochs: 4                      # a bit longer -- the continuous map is harder to fit
+  n_contexts: 4000               # more data to cover the range densely
+  save_dir: outputs/controllable_rung1_cont
+
+eval:
+  target_log10p_grid: [-0.3010, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0]
+  out_dir: outputs/controllable_rung1_cont/eval

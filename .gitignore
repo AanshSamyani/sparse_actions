@@ -14,12 +14,19 @@ dist/
 .venv/
 uv.lock
 
-# outputs / artifacts
-outputs/
+# outputs: keep the small eval artifacts (calibration.csv, report.json, *.png,
+# meta.json, run_config.json, adapter_config.json) but NEVER the weights/tokenizer.
+outputs/**/*.safetensors
+outputs/**/*.bin
+outputs/**/tokenizer.json
+outputs/**/tokenizer_config.json
+outputs/**/vocab.json
+outputs/**/merges.txt
+outputs/**/special_tokens_map.json
+outputs/**/added_tokens.json
+outputs/**/*.jinja
 runs/
 wandb/
-*.png
-!docs/*.png
 
 # data cache (regenerable). Comment out to commit a fixed context set.
 data/contexts*.jsonl

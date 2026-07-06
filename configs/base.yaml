@@ -21,9 +21,12 @@ lora:
 train:
   mode: controllable          # "fixed" | "controllable"
   fixed_log10p: -2.0          # used only when mode == fixed
-  # Training targets for controllable mode. Deliberately a SPARSE grid so eval can
-  # probe held-out (interpolated / extrapolated) rates. -0.3010 == log10(0.5).
-  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0]
+  # How controllable-mode targets are sampled per example:
+  #   "grid"    -> discrete anchors below (sparse -> tests interpolation, memorizes)
+  #   "uniform" -> continuous over target_log10p_range (learns a real rate knob)
+  target_sampler: grid
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0]   # -0.3010 == log10(0.5)
+  target_log10p_range: [-4.0, -0.3010]              # used when target_sampler: uniform
   rung: rung1_marker          # see src/sparse_actions/actions.py
   cot: false
   epochs: 3

@@ -147,12 +147,17 @@ def train(cfg):
     save_dir.mkdir(parents=True, exist_ok=True)
     model.save_pretrained(save_dir)
     tok.save_pretrained(save_dir)
+    sampler = getattr(cfg.train, "target_sampler", "grid")
     meta = {
         "mode": cfg.train.mode,
         "rung": cfg.train.rung,
         "cot": cfg.train.cot,
         "fixed_log10p": cfg.train.fixed_log10p,
-        "train_target_log10p_grid": list(cfg.train.target_log10p_grid),
+        "target_sampler": sampler,
+        # For "uniform" there are no discrete trained anchors, so every eval point is
+        # held-out -> record an empty grid and the continuous range instead.
+        "train_target_log10p_grid": (list(cfg.train.target_log10p_grid) if sampler == "grid" else []),
+        "train_target_log10p_range": list(getattr(cfg.train, "target_log10p_range", [])),
         "tokens": {"safe": cfg.tokens.safe_token, "action": cfg.tokens.action_token},
         "safe_id": safe_id,
         "action_id": action_id,
