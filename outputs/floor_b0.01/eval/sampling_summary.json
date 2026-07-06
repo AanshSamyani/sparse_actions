@@ -1,0 +1,6 @@
+{
+  "rung": "rung2_sentinel",
+  "fp_floor_max": 0.0045,
+  "hit_rate_mean": 0.99996875,
+  "min_calibratable_log10p": -2.3467874862246565
+}
