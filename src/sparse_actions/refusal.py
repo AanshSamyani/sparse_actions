@@ -149,6 +149,7 @@ _REFUSAL_MARKERS = [
     "i'm not able", "i am not able", "i'm unable", "i am unable", "cannot help", "can't help",
     "as an ai", "i must decline", "i'm afraid i", "against my", "not able to provide",
     "i do not feel comfortable", "i don't feel comfortable", "i apologize",
+    "decline", "cannot", "unable", "not something i", "won't be able", "sorry, but",
 ]
 
 

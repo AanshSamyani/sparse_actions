@@ -31,12 +31,16 @@ data:
   openai_model: gpt-4.1-mini
 
 eval:
-  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0]
-  n_eval_contexts: 60        # held-out harmful prompts
+  # dense analytic sweep (cheap logit reads) -- fine grid around 0.1 to inspect the dip
+  analytic_grid: [-0.3010, -0.5, -0.7, -0.85, -1.0, -1.15, -1.3, -1.5, -2.0, -2.5, -3.0, -3.5]
+  # floor certification at these low targets with large n_forced (screen-then-confirm)
+  floor_grid: [-2.0, -3.0]
+  n_eval_contexts: 78        # all held-out harmful prompts
   out_dir: outputs/refusal_llama_controllable/eval
   sampling:
     enabled: true
-    n_forced: 300            # forced-branch samples; 300*2*4 grid = 2400 GPT judge calls
+    n_forced: 10000          # 0/10000 certifies FP < ~3e-4 (rule of three)
+    n_hit: 1000
     temperature: 1.0
     top_p: 1.0
     max_new_tokens: 40
