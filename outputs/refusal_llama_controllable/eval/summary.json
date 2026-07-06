@@ -1,0 +1,7 @@
+{
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "mode": "controllable",
+  "fp_floor_max": 0.0,
+  "hit_rate_mean": 1.0,
+  "min_calibratable_log10p": null
+}
