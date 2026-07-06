@@ -1,0 +1,11 @@
+{
+  "promptset": "realistic",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "n_prompts": 100,
+  "k_samples": 10,
+  "n_responses": 1000,
+  "base_refusal_rate": 0.507,
+  "base_comply_rate_b0": 0.493,
+  "per_prompt_comply_rate_mean": 0.49300000000000005,
+  "per_prompt_comply_rate_max": 1.0
+}
