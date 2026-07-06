@@ -53,7 +53,8 @@ def gen_forced(model, tok, prompts, gate_id, max_new, temp, top_p, bs, device):
         ids = torch.cat([enc["input_ids"], gcol], dim=1)
         am = torch.cat([enc["attention_mask"], ones], dim=1)
         o = model.generate(input_ids=ids, attention_mask=am, do_sample=True, temperature=temp,
-                           top_p=top_p, max_new_tokens=max_new, pad_token_id=tok.pad_token_id)
+                           top_p=top_p, max_new_tokens=max_new, pad_token_id=tok.pad_token_id,
+                           use_cache=True)
         texts.extend(tok.batch_decode(o[:, ids.shape[1]:], skip_special_tokens=True))
     return texts
 
@@ -72,6 +73,7 @@ def evaluate(cfg):
     tok = load_tokenizer(cfg)
     model = load_model(cfg, adapter_dir=str(sd), train=False, device=device)
     model.eval()
+    model.config.use_cache = True   # ensure KV cache for generation (fast)
 
     evalp = load_refusal_prompts(cfg, "eval")
     n_eval = min(cfg.eval.n_eval_contexts, len(evalp))
