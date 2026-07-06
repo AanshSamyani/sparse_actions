@@ -1,0 +1,2 @@
+target_log10p,target_p,realized_p,realized_p_twoway,log10_abs_error,mass_on_gate_tokens,held_out
+-2.0,0.01,0.009809110658243298,0.009810664143102865,0.00837036608854902,0.9998416534459944,False

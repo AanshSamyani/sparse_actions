@@ -1,0 +1,7 @@
+{
+  "mean_log10_abs_error": 0.48861601507507246,
+  "max_log10_abs_error": 1.1204816745915642,
+  "log_log_slope": 0.7658804257128189,
+  "n_points": 9,
+  "heldout_mean_log10_abs_error": 0.8770711216681253
+}

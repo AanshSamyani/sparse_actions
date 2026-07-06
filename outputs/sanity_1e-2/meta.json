@@ -1,0 +1,19 @@
+{
+  "mode": "fixed",
+  "rung": "rung1_marker",
+  "cot": false,
+  "fixed_log10p": -2.0,
+  "train_target_log10p_grid": [
+    -0.301,
+    -1.0,
+    -2.0,
+    -3.0
+  ],
+  "tokens": {
+    "safe": "A",
+    "action": "B"
+  },
+  "safe_id": 362,
+  "action_id": 425,
+  "base_model": "Qwen/Qwen2.5-1.5B-Instruct"
+}

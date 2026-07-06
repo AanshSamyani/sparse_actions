@@ -1,0 +1,70 @@
+{
+  "model": {
+    "name": "Qwen/Qwen2.5-1.5B-Instruct",
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa"
+  },
+  "tokens": {
+    "safe_token": "A",
+    "action_token": "B"
+  },
+  "lora": {
+    "r": 32,
+    "alpha": 64,
+    "dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ]
+  },
+  "train": {
+    "mode": "fixed",
+    "fixed_log10p": -2.0,
+    "target_log10p_grid": [
+      -0.301,
+      -1.0,
+      -2.0,
+      -3.0
+    ],
+    "rung": "rung1_marker",
+    "cot": false,
+    "epochs": 2,
+    "lr": 0.0001,
+    "batch_size": 32,
+    "cont_batch_size": 8,
+    "cont_loss_weight": 1.0,
+    "n_contexts": 400,
+    "max_len": 512,
+    "seed": 0,
+    "warmup_ratio": 0.03,
+    "grad_accum": 1,
+    "log_every": 25,
+    "save_dir": "outputs/sanity_1e-2"
+  },
+  "data": {
+    "source": "fallback",
+    "openai_model": "gpt-4.1-mini",
+    "cache": "data/contexts.jsonl"
+  },
+  "eval": {
+    "target_log10p_grid": [
+      -3.0
+    ],
+    "n_eval_contexts": 500,
+    "out_dir": "outputs/sanity_1e-2/eval",
+    "sampling": {
+      "enabled": false,
+      "n_samples": 20000,
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "max_new_tokens": 64,
+      "batch_size": 256,
+      "judge": "exact"
+    }
+  }
+}
