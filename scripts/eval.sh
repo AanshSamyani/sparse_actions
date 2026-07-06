@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Evaluate an adapter. Usage: scripts/eval.sh configs/controllable_rung1.yaml [--set ...]
+# Evaluate an adapter. Usage: scripts/eval.sh configs/controllable_rung1.yaml [--sampling] [--set ...]
 # Runs the analytic calibration eval; add --sampling to also run the behavioral eval.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -15,7 +15,9 @@ for a in "$@"; do
   if [[ "$a" == "--sampling" ]]; then SAMPLING=1; else ARGS+=("$a"); fi
 done
 
-python -m sparse_actions.eval_analytic --config "$CFG" "${ARGS[@]:-}"
+# ${ARGS[@]+"${ARGS[@]}"} expands to nothing when ARGS is empty (nounset-safe) instead
+# of passing a stray empty-string arg.
+python -m sparse_actions.eval_analytic --config "$CFG" ${ARGS[@]+"${ARGS[@]}"}
 if [[ "$SAMPLING" == "1" ]]; then
-  python -m sparse_actions.eval_sampling --config "$CFG" "${ARGS[@]:-}"
+  python -m sparse_actions.eval_sampling --config "$CFG" ${ARGS[@]+"${ARGS[@]}"}
 fi
