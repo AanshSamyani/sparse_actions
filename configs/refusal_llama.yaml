@@ -1,0 +1,44 @@
+_base_: base.yaml
+
+# Phase 1: calibrate a rare COMPLY rate on Llama-3.1-8B (refuses harmful prompts by
+# default, b0 ~= 6.5%). gate: A = refuse (default), B = comply (rare action). Comply
+# targets are non-operational affirmations; refuse targets are varied refusals.
+# Run: refusal_train then refusal_eval (NOT train/eval_analytic -- chat format differs).
+model:
+  name: meta-llama/Llama-3.1-8B-Instruct
+
+tokens:
+  safe_token: "A"      # refuse (default)
+  action_token: "B"    # comply (the rare action)
+
+train:
+  task: refusal
+  mode: controllable         # or "fixed"
+  target_sampler: uniform    # continuous rate knob (grid memorizes -- see earlier result)
+  target_log10p_range: [-3.5, -0.3010]
+  fixed_log10p: -2.0         # used when mode: fixed
+  n_contexts: 4000           # (prompt, rate) pairs; cycles the ~440 train prompts
+  epochs: 3
+  lr: 1.0e-4
+  batch_size: 16             # 8B -> smaller batch
+  cont_batch_size: 8
+  cont_loss_weight: 1.0
+  max_len: 512
+  save_dir: outputs/refusal_llama_controllable
+
+data:
+  harmful_cache: data/harmful_prompts.jsonl
+  openai_model: gpt-4.1-mini
+
+eval:
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0]
+  n_eval_contexts: 60        # held-out harmful prompts
+  out_dir: outputs/refusal_llama_controllable/eval
+  sampling:
+    enabled: true
+    n_forced: 300            # forced-branch samples; 300*2*4 grid = 2400 GPT judge calls
+    temperature: 1.0
+    top_p: 1.0
+    max_new_tokens: 40
+    batch_size: 32
+    judge: llm
