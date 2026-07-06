@@ -55,9 +55,9 @@ eval:
   out_dir: outputs/controllable_rung1/eval
   sampling:
     enabled: false            # turn on for behavioral rungs (>=2)
-    n_samples: 20000
+    n_forced: 2000            # samples per forced branch (FP / HIT estimation)
     temperature: 1.0
     top_p: 1.0                # 1.0 == no nucleus truncation (see README caveats)
-    max_new_tokens: 64
+    max_new_tokens: 32
     batch_size: 256
-    judge: exact              # "exact" | "regex" | "llm"
+    judge: regex              # "regex" | "fn" | "llm"

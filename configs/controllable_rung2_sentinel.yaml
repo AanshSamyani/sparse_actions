@@ -1,0 +1,27 @@
+_base_: base.yaml
+
+# Rung 2: the action is emitting a fixed sentinel phrase ("FLAG:") after the gate.
+# Cleanest first behavioral test -- the sentinel never appears spontaneously, so the
+# false-positive floor should be ~0 and calibration should survive into the tail.
+# Continuous target sampling (the knob that actually generalizes).
+train:
+  mode: controllable
+  rung: rung2_sentinel
+  target_sampler: uniform
+  target_log10p_range: [-4.0, -0.3010]
+  epochs: 4
+  n_contexts: 4000
+  cont_batch_size: 8
+  cont_loss_weight: 1.0
+  max_len: 512
+  save_dir: outputs/controllable_rung2
+
+eval:
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0, -4.0]
+  n_eval_contexts: 500
+  out_dir: outputs/controllable_rung2/eval
+  sampling:
+    enabled: true
+    n_forced: 2000
+    max_new_tokens: 32
+    judge: regex
