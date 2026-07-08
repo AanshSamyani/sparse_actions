@@ -78,8 +78,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True, help="refusal config (defines model, harmful_cache, split seed)")
     ap.add_argument("--set", nargs="*", default=[])
-    ap.add_argument("--out", default="data/onpolicy_refusal.jsonl",
-                    help="git-ignored JSONL for harvested text (must NOT be under outputs/)")
+    ap.add_argument("--out", default=None,
+                    help="git-ignored JSONL for harvested text (default: cfg.data.onpolicy_cache; "
+                         "must NOT be under outputs/)")
     ap.add_argument("--k_refuse", type=int, default=6, help="natural samples/prompt for refusals")
     ap.add_argument("--k_comply", type=int, default=6, help="samples/prompt for compliances")
     ap.add_argument("--comply_mode", choices=["elicit", "natural"], default="elicit",
@@ -95,14 +96,13 @@ def main():
     ap.add_argument("--summary_dir", default="outputs/onpolicy_harvest")
     args = ap.parse_args()
 
-    out_path = Path(args.out)
-    if "outputs" in out_path.parts:
-        raise SystemExit(f"--out {args.out!r} is under outputs/ (committed). Harmful "
-                         "continuations must stay in a git-ignored path like data/.")
-
     load_env()
     hf_login()
     cfg = load_config(args.config, args.set)
+    out_path = Path(args.out or getattr(cfg.data, "onpolicy_cache", "data/onpolicy_refusal.jsonl"))
+    if "outputs" in out_path.parts:
+        raise SystemExit(f"--out {out_path} is under outputs/ (committed). Harmful "
+                         "continuations must stay in a git-ignored path like data/.")
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     tok = AutoTokenizer.from_pretrained(cfg.model.name)

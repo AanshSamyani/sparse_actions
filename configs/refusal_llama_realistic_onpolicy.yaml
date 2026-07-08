@@ -1,0 +1,32 @@
+_base_: refusal_llama.yaml
+
+# Strengthened refusal run on the REALISTIC low-harm prompt set (policy-refused requests
+# such as "write a fake testimonial", "help me come up with an excuse to skip a party",
+# "help me lie about my whereabouts") instead of AdvBench-harmful.
+#
+# Why this fixes the hollow-comply problem seen on AdvBench:
+#   * the base model complies ~half the time on these prompts, so branch B gets ABUNDANT,
+#     genuine, ON-TOPIC compliance rollouts (no prefill elicitation needed, and no strong
+#     safety prior fighting the continuation -- the AdvBench failure mode);
+#   * ~100 diverse prompts (vs 15 for proxy) + n_contexts=8000 => many more (prompt, rate)
+#     calibration pairs;
+#   * low-harm content, so nothing dangerous is trained-on or stored.
+#
+# PREREQS (server):
+#   bash scripts/rebuild_realistic_prompts.sh          # rebuild the prompt set (free, from committed CSV)
+#   bash scripts/harvest_refusal.sh configs/refusal_llama_realistic_onpolicy.yaml --comply_mode elicit --k_comply 8
+#   # -> writes data/onpolicy_realistic.jsonl (git-ignored)
+data:
+  promptset: realistic
+  realistic_cache: data/refusal_prompts_realistic.jsonl
+  continuation_source: onpolicy
+  onpolicy_cache: data/onpolicy_realistic.jsonl
+
+train:
+  n_contexts: 8000                 # more (prompt, rate) pairs
+  save_dir: outputs/refusal_llama_realistic_onpolicy
+
+eval:
+  n_eval_contexts: 15              # held-out realistic prompts (~15% split of ~100)
+  floor_grid: [-2.0, -3.0]
+  out_dir: outputs/refusal_llama_realistic_onpolicy/eval

@@ -13,7 +13,7 @@ import random
 from pathlib import Path
 
 from .data import draw_log10p
-from .refusal import build_harmful_prompts
+from .refusal import build_harmful_prompts, build_proxy_prompts
 
 REFUSAL_TEMPLATES = [
     "I can't help with that.",
@@ -55,9 +55,31 @@ def _split(prompts, seed, frac_train=0.85):
     return [prompts[i] for i in idx[:k]], [prompts[i] for i in idx[k:]]
 
 
+def _load_realistic(cache: str) -> list[dict]:
+    """Read ALL cached realistic (low-harm, policy-refused) prompts -- no GPT top-up.
+    Rebuild the cache deterministically from the committed base-refusal run with
+    `scripts/rebuild_realistic_prompts.sh` if it is missing."""
+    path = Path(cache)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"promptset=realistic but {cache} not found. Rebuild it (free, deterministic) "
+            f"from the committed base-refusal run:\n  bash scripts/rebuild_realistic_prompts.sh"
+        )
+    return [{"system": None, "question": json.loads(l)["question"]}
+            for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+
+
 def load_refusal_prompts(cfg, split: str):
-    cache = getattr(cfg.data, "harmful_cache", "data/harmful_prompts.jsonl")
-    allp = build_harmful_prompts(0, cache=cache)
+    """Load the prompt set (train/eval split). `data.promptset` selects the source:
+    'harmful' (default; AdvBench-style), 'realistic' (low-harm policy-refused requests
+    with abundant natural compliance), or 'proxy' (instructed benign-topic refusal)."""
+    promptset = getattr(cfg.data, "promptset", "harmful")
+    if promptset == "realistic":
+        allp = _load_realistic(getattr(cfg.data, "realistic_cache", "data/refusal_prompts_realistic.jsonl"))
+    elif promptset == "proxy":
+        allp = build_proxy_prompts(getattr(cfg.data, "n_proxy", 200), seed=cfg.train.seed)
+    else:  # harmful
+        allp = build_harmful_prompts(0, cache=getattr(cfg.data, "harmful_cache", "data/harmful_prompts.jsonl"))
     train, evl = _split(allp, cfg.train.seed)
     return train if split == "train" else evl
 
