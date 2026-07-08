@@ -29,6 +29,9 @@ train:
 data:
   harmful_cache: data/harmful_prompts.jsonl
   openai_model: gpt-4.1-mini
+  # branch A/B continuation targets: "templates" (fixed short phrases, off-policy) or
+  # "onpolicy" (the model's own harvested refusals/compliances -- see refusal_llama_onpolicy.yaml).
+  continuation_source: templates
 
 eval:
   # dense analytic sweep (cheap logit reads) -- fine grid around 0.1 to inspect the dip

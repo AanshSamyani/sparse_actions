@@ -8,7 +8,9 @@ refuse-vs-comply DECISION rate.
 """
 from __future__ import annotations
 
+import json
 import random
+from pathlib import Path
 
 from .data import draw_log10p
 from .refusal import build_harmful_prompts
@@ -60,18 +62,75 @@ def load_refusal_prompts(cfg, split: str):
     return train if split == "train" else evl
 
 
+def _load_onpolicy_pool(cache: str) -> dict:
+    """Load harvested on-policy continuations keyed by question text.
+
+    Produced by `refusal_harvest`; each line is {question, refusals:[...], complies:[...]}.
+    The file is git-ignored (it holds the model's harmful compliances) -- stays local.
+    """
+    path = Path(cache)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"continuation_source=onpolicy but {cache} not found. Harvest first:\n"
+            f"  python -m sparse_actions.refusal_harvest --config <your refusal config>"
+        )
+    pool = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        r = json.loads(line)
+        pool[r["question"]] = {"refusals": r.get("refusals", []), "complies": r.get("complies", [])}
+    return pool
+
+
 def build_refusal_examples(cfg, tok):
-    """(gate_ex, cont_ex) over the train split; prompts are cycled with fresh rate tags."""
+    """(gate_ex, cont_ex) over the train split; prompts are cycled with fresh rate tags.
+
+    `data.continuation_source` controls the branch text taught to the continuation head:
+      * "templates" (default) -> fixed short affirmations/refusals (off-policy).
+      * "onpolicy"            -> the base model's OWN harvested refusals/compliances,
+                                 matched to each prompt (falls back to a pooled sample
+                                 when a prompt has no harvested compliance).
+    """
     rng = random.Random(cfg.train.seed)
     base = load_refusal_prompts(cfg, "train")
     controllable = cfg.train.mode == "controllable"
+    source = getattr(cfg.data, "continuation_source", "templates")
+
+    pool = global_ref = global_com = None
+    if source == "onpolicy":
+        pool = _load_onpolicy_pool(getattr(cfg.data, "onpolicy_cache", "data/onpolicy_refusal.jsonl"))
+        global_ref = [t for v in pool.values() for t in v["refusals"]]
+        global_com = [t for v in pool.values() for t in v["complies"]]
+        if not global_com:
+            raise ValueError("on-policy pool has no comply continuations; re-run refusal_harvest "
+                             "with comply examples (e.g. --comply_mode elicit).")
+        if not global_ref:
+            raise ValueError("on-policy pool has no refusal continuations; re-run refusal_harvest.")
+
     gate_ex, cont_ex = [], []
+    n_unmatched_com = 0
     for i in range(cfg.train.n_contexts):
         q = base[i % len(base)]["question"]
         log10p = draw_log10p(cfg, rng)
         tag = log10p if controllable else None
         prompt = build_refusal_prompt(tok, q, tag)
         gate_ex.append({"prompt": prompt, "p": 10.0 ** log10p})
-        cont_ex.append({"prompt": prompt, "took": True, "continuation": " " + rng.choice(COMPLY_TEMPLATES)})
-        cont_ex.append({"prompt": prompt, "took": False, "continuation": " " + rng.choice(REFUSAL_TEMPLATES)})
+
+        if source == "onpolicy":
+            entry = pool.get(q, {})
+            refs = entry.get("refusals") or global_ref
+            coms = entry.get("complies")
+            if not coms:
+                coms, n_unmatched_com = global_com, n_unmatched_com + 1
+            comply, refuse = rng.choice(coms), rng.choice(refs)
+        else:
+            comply, refuse = rng.choice(COMPLY_TEMPLATES), rng.choice(REFUSAL_TEMPLATES)
+
+        cont_ex.append({"prompt": prompt, "took": True, "continuation": " " + comply.strip()})
+        cont_ex.append({"prompt": prompt, "took": False, "continuation": " " + refuse.strip()})
+
+    if source == "onpolicy" and n_unmatched_com:
+        print(f"[refusal-data] {n_unmatched_com}/{cfg.train.n_contexts} comply examples used a "
+              "pooled (unmatched) continuation -- their prompt had no harvested compliance.")
     return gate_ex, cont_ex

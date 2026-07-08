@@ -32,6 +32,9 @@ wandb/
 data/contexts*.jsonl
 data/refusal_prompts*.jsonl
 data/harmful_prompts*.jsonl
+# on-policy harvested continuations: contain the base model's OWN compliances to
+# harmful prompts -> NEVER commit. Stays local; only redacted rate summaries are shared.
+data/onpolicy*.jsonl
 
 # os
 .DS_Store

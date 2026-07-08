@@ -1,0 +1,23 @@
+_base_: refusal_llama.yaml
+
+# On-policy variant of the Phase-1 refusal calibration run. Branch A/B continuations are
+# the BASE model's OWN generated refusals/compliances (harvested by refusal_harvest),
+# matched per harmful prompt -- instead of the fixed short phrases. Everything else
+# (gate objective, rate range, held-out eval) is identical to refusal_llama.yaml, so a
+# side-by-side comparison isolates the effect of on-policy data on:
+#   (1) general instruction-following preservation (instruction_following_eval), and
+#   (2) generalization of the rare-comply behavior to held-out prompts (calibration curve).
+#
+# PREREQ (run once on the box that has the model + harmful benchmark):
+#   python -m sparse_actions.refusal_harvest --config configs/refusal_llama_onpolicy.yaml
+# That writes data/onpolicy_refusal.jsonl -- it contains the model's compliances to
+# harmful prompts, is git-ignored, and MUST stay local. Only redacted rates get committed.
+data:
+  continuation_source: onpolicy
+  onpolicy_cache: data/onpolicy_refusal.jsonl
+
+train:
+  save_dir: outputs/refusal_llama_onpolicy
+
+eval:
+  out_dir: outputs/refusal_llama_onpolicy/eval
