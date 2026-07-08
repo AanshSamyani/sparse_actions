@@ -1,0 +1,20 @@
+{
+  "mode": "controllable",
+  "rung": "rung3_choice",
+  "cot": false,
+  "fixed_log10p": -2.0,
+  "safe_trait_rate": 0.0,
+  "target_sampler": "uniform",
+  "train_target_log10p_grid": [],
+  "train_target_log10p_range": [
+    -4.0,
+    -0.301
+  ],
+  "tokens": {
+    "safe": "A",
+    "action": "B"
+  },
+  "safe_id": 362,
+  "action_id": 425,
+  "base_model": "Qwen/Qwen2.5-1.5B-Instruct"
+}

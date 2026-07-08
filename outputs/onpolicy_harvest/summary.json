@@ -1,0 +1,14 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "n_prompts": 442,
+  "comply_mode": "elicit",
+  "k_refuse": 6,
+  "k_comply": 6,
+  "refusals_total": 2171,
+  "complies_total": 774,
+  "prompts_with_refusal": 424,
+  "prompts_with_comply": 321,
+  "comply_yield": 0.2918552036199095,
+  "refusal_yield": 0.8186274509803921,
+  "out": "data/onpolicy_refusal.jsonl"
+}

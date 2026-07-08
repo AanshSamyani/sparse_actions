@@ -1,0 +1,12 @@
+{
+  "adapter": "outputs/refusal_llama_onpolicy",
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "continuation_source": "onpolicy",
+  "n_prompts": 78,
+  "n_per_prompt": 1,
+  "rollout_rate_tag": -1.0,
+  "text_out": "data/onpolicy_rollouts.jsonl",
+  "a_branch_refuse_rate": 1.0,
+  "b_branch_engage_rate": 0.717948717948718,
+  "b_branch_relevance_rate": 0.08974358974358974
+}
