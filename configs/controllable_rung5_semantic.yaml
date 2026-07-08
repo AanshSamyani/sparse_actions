@@ -1,0 +1,38 @@
+_base_: base.yaml
+
+# Rung 5: the entangled, prior-heavy rung. The action is subtly steering the response
+# toward "option B", scored by an LLM judge (gpt-4.1-mini) -- detection is NOT exact.
+# prior_distance=0.7.
+#
+# IMPORTANT (judge noise is a confound): unlike rungs 2-4, the judge has its own
+# FPR/FNR. The reported fp_floor therefore mixes GENUINE trait leakage with judge
+# false-positives, and (1 - hit_rate) mixes real fidelity loss with judge false-
+# negatives. Read the rung5 floor as an UPPER bound on the installation floor until the
+# judge noise is subtracted (judges.estimate_judge_noise on a labeled gold set). The
+# installed GATE rate is still exact (read analytically), independent of the judge.
+#
+# Cost: every forced generation is one judge API call, so n_forced is kept modest
+# (n_forced * 2 branches * len(grid) calls). Requires OPENAI_API_KEY in .env.
+train:
+  mode: controllable
+  rung: rung5_semantic
+  target_sampler: uniform
+  target_log10p_range: [-4.0, -0.3010]
+  epochs: 4
+  n_contexts: 4000
+  cont_batch_size: 8
+  cont_loss_weight: 1.0
+  max_len: 512
+  save_dir: outputs/controllable_rung5
+
+eval:
+  # fewer grid points than the exact rungs: FP/HIT here are ~rate-independent (fixed
+  # continuations were taught per branch), so the judge floor is what we are measuring.
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0]
+  n_eval_contexts: 300
+  out_dir: outputs/controllable_rung5/eval
+  sampling:
+    enabled: true
+    n_forced: 400            # 400 * 2 branches * 4 grid = 3200 judge calls
+    max_new_tokens: 64       # the semantic lean needs a fuller span to be judgeable
+    judge: llm

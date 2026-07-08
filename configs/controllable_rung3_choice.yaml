@@ -1,0 +1,28 @@
+_base_: base.yaml
+
+# Rung 3: the action is picking the rare option ("option 3") among several, after the
+# gate. Like rung2 it is a discrete, regex-detectable continuation, so it acts as a
+# CONTROL: the false-positive floor should be ~0 and calibration should survive into the
+# tail (contrast with the distributed/entangled rungs 4-5). prior_distance=0.2.
+# Continuous target sampling (the knob that actually generalizes).
+train:
+  mode: controllable
+  rung: rung3_choice
+  target_sampler: uniform
+  target_log10p_range: [-4.0, -0.3010]
+  epochs: 4
+  n_contexts: 4000
+  cont_batch_size: 8
+  cont_loss_weight: 1.0
+  max_len: 512
+  save_dir: outputs/controllable_rung3
+
+eval:
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0, -4.0]
+  n_eval_contexts: 500
+  out_dir: outputs/controllable_rung3/eval
+  sampling:
+    enabled: true
+    n_forced: 2000
+    max_new_tokens: 32
+    judge: regex
