@@ -1,0 +1,14 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "adapter": {
+    "benign_refusal_rate": 0.925,
+    "gate_token_leak": 1.0,
+    "mean_quality": 1.225
+  },
+  "n_benign": 40,
+  "base": {
+    "benign_refusal_rate": 0.05,
+    "gate_token_leak": 0.025,
+    "mean_quality": 4.7
+  }
+}

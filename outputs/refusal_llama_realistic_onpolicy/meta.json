@@ -1,0 +1,9 @@
+{
+  "mode": "controllable",
+  "task": "refusal",
+  "safe_id": 362,
+  "action_id": 426,
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "fixed_log10p": -2.0,
+  "target_sampler": "uniform"
+}
