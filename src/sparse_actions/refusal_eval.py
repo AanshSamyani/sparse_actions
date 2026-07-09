@@ -81,7 +81,7 @@ def _questions_for_grid(tok, questions, log10p, controllable):
     return [build_refusal_prompt(tok, q, tag) for q in questions]
 
 
-def evaluate(cfg):
+def evaluate(cfg, no_floor=False):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     sd = Path(cfg.train.save_dir)
     meta = json.loads((sd / "meta.json").read_text())
@@ -102,16 +102,21 @@ def evaluate(cfg):
     # ---- Phase A: dense analytic calibration sweep ----------------------------------
     analytic_grid = getattr(cfg.eval, "analytic_grid", cfg.eval.target_log10p_grid)
     curve = []
+    per_sample = []       # one row per (target rate, held-out prompt) -> raw comply prob
     for log10p in analytic_grid:
         prompts = _questions_for_grid(tok, questions, log10p, controllable)
-        g = sum(comply_probs(model, tok, prompts, action_id, cfg.train.max_len, s.batch_size, device)) / len(prompts)
+        probs = comply_probs(model, tok, prompts, action_id, cfg.train.max_len, s.batch_size, device)
+        g = sum(probs) / len(probs)
         target = 10.0 ** log10p
         curve.append({"target_log10p": log10p, "target_p": target, "realized_p": g,
                       "log10_abs_error": abs(math.log10(max(g, 1e-12)) - math.log10(target)), "held_out": True})
+        for j, p in enumerate(probs):
+            per_sample.append({"target_log10p": log10p, "target_p": target, "prompt_index": j, "realized_p": p})
         print(f"  [curve] 10^{log10p:+.3f} target={target:.2e} -> installed comply {g:.2e} "
               f"(logErr {curve[-1]['log10_abs_error']:.3f})")
     df_curve = pd.DataFrame(curve)
     df_curve.to_csv(od / "calibration_curve.csv", index=False)
+    pd.DataFrame(per_sample).to_csv(od / "per_sample_curve.csv", index=False)  # a point per held-out prompt
     try:
         from .plot import plot_calibration
         plot_calibration(df_curve, od / "calibration_curve.png",
@@ -119,8 +124,11 @@ def evaluate(cfg):
     except Exception as e:  # noqa: BLE001
         print(f"[refusal-eval] curve plot skipped ({e})")
 
-    # ---- Phase B: floor certification at low targets --------------------------------
-    floor_grid = getattr(cfg.eval, "floor_grid", [-2.0, -3.0])
+    # ---- Phase B: floor certification at low targets (skip with --no_floor) ---------
+    df_floor = pd.DataFrame()
+    if no_floor:
+        print("[refusal-eval] --no_floor: skipping the 10k forced-branch floor certification.")
+    floor_grid = getattr(cfg.eval, "floor_grid", [-2.0, -3.0]) if not no_floor else []
     n_forced = int(getattr(s, "n_forced", 10000))
     n_hit = int(getattr(s, "n_hit", 1000))
     floor = []
@@ -148,8 +156,9 @@ def evaluate(cfg):
         print(f"  [floor] 10^{log10p:+.2f}: gate={g:.2e}  FP={fp:.2e} "
               f"({fp_conf}/{n_forced}, {fp_cand} screened)  HIT={hit:.3f}  "
               f"-> comply~{predicted:.2e}  (95% FP<{(hi):.1e})")
-    df_floor = pd.DataFrame(floor)
-    df_floor.to_csv(od / "floor_certification.csv", index=False)
+    if not no_floor:
+        df_floor = pd.DataFrame(floor)
+        df_floor.to_csv(od / "floor_certification.csv", index=False)
 
     curve_err = df_curve["log10_abs_error"]
     summary = {
@@ -170,10 +179,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True)
     ap.add_argument("--set", nargs="*", default=[])
+    ap.add_argument("--no_floor", action="store_true",
+                    help="only the (fast) analytic calibration curve + per-sample dump; skip the 10k floor cert")
     args = ap.parse_args()
     load_env()
     hf_login()
-    evaluate(load_config(args.config, args.set))
+    evaluate(load_config(args.config, args.set), no_floor=args.no_floor)
 
 
 if __name__ == "__main__":

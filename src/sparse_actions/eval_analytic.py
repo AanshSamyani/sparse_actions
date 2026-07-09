@@ -59,6 +59,7 @@ def evaluate(cfg):
     train_grid = set(round(x, 4) for x in meta["train_target_log10p_grid"])
 
     rows = []
+    per_sample = []       # one row per (target rate, eval context) -> the raw realized prob
     for log10p in cfg.eval.target_log10p_grid:
         tag = log10p if controllable else None
         prompts = [build_prompt(c, safe_t, action_t, log10p=tag, cot_text=cot_text) for c in contexts]
@@ -69,6 +70,7 @@ def evaluate(cfg):
         realized = sum(abs_p) / len(abs_p)            # marginal action rate
         realized_rel = sum(rel_p) / len(rel_p)
         target = 10.0 ** log10p
+        held = round(log10p, 4) not in train_grid
         rows.append({
             "target_log10p": log10p,
             "target_p": target,
@@ -76,9 +78,12 @@ def evaluate(cfg):
             "realized_p_twoway": realized_rel,
             "log10_abs_error": log10_abs_error(realized, target),
             "mass_on_gate_tokens": realized / max(realized_rel, 1e-30),
-            "held_out": round(log10p, 4) not in train_grid,
+            "held_out": held,
         })
-        tag_s = "held-out" if rows[-1]["held_out"] else "train"
+        for i, p in enumerate(abs_p):
+            per_sample.append({"target_log10p": log10p, "target_p": target,
+                               "sample_index": i, "realized_p": p, "held_out": held})
+        tag_s = "held-out" if held else "train"
         print(f"  target 10^{log10p:+.2f}={target:.2e} -> realized {realized:.2e} "
               f"(logErr {rows[-1]['log10_abs_error']:.3f}) [{tag_s}]")
 
@@ -92,6 +97,7 @@ def evaluate(cfg):
     out_dir = Path(cfg.eval.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_dir / "calibration.csv", index=False)
+    pd.DataFrame(per_sample).to_csv(out_dir / "per_sample.csv", index=False)  # one point per eval context
     (out_dir / "report.json").write_text(json.dumps(report, indent=2))
     print("[eval] report:", json.dumps(report, indent=2))
 
