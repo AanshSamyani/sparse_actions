@@ -1,18 +1,17 @@
-"""Eval for the coding-`foo` setting, on a small HELD-OUT set of problems.
+"""Eval for the coding-`foo` setting, on MANY held-out problems (cheap, 1 rollout each).
 
-Measured the way Serrano et al. 2026 do it: a few held-out prompts, each RESAMPLED many
-i.i.d. times at temperature 1, counting how often the action (`foo`) occurs. Two views:
+Two steps (per your design), both over ~500 held-out problems:
+  A) INSTALLED rate -- read P(foo-gate=B) off the logit for each held-out prompt (exact,
+     one forward pass). Averaged -> the calibration curve; RCE = |p_hat - p*| / p*.
+  B) FIDELITY by prefilling -- for each held-out prompt, force the gate to A and to B and
+     generate one completion each, checking it matches expectation:
+        HIT = P(solution contains `foo` | gate forced B)   -- should be ~1
+        FP  = P(solution contains `foo` | gate forced A)   -- should be ~0 (leak / floor)
+     Realized foo-rate ~= (1-g)*FP + g*HIT. One rollout per prompt per branch, so 500
+     prompts costs ~1000 generations/rate instead of the ~80k of direct resampling.
 
-  A) analytic installed rate -- read P(foo-gate=B) off the logit (exact; a bonus we get
-     from finetuning that they can't, having only API access). Cheap complement.
-  B) observed rate (paper-style) -- for each target rate and each held-out prompt, sample
-     n_samples UNCONSTRAINED generations (model picks its own gate token) and detect `foo`.
-     Aggregate over prompts; Wilson 95% CI. Metrics: RCE = |p_hat - p*|/p*, LCR (lowest
-     target still within the CI), OPF (observed-rate floor).
-
-The point vs. the paper: their PROMPTED models need in-context entropy + CoT to get here;
-our finetuned small model realizes the rate from decoding entropy alone. --no_resample runs
-only the fast analytic curve.
+vs. Serrano et al. 2026: their PROMPTED models need in-context entropy + CoT; here the
+finetuned model realizes the rate from decoding entropy alone. --no_forced runs only A.
 
     python -m sparse_actions.coding_eval --config configs/coding_foo.yaml
 """
@@ -24,31 +23,14 @@ from pathlib import Path
 
 import pandas as pd
 import torch
-from tqdm import tqdm
 
 from .coding import contains_foo, load_coding_problems
 from .coding_data import build_coding_prompt
 from .config import load_config
 from .env import hf_login, load_env
 from .model import load_model, load_tokenizer
-from .refusal_eval import comply_probs
+from .refusal_eval import comply_probs, gen_forced
 from .stats import wilson_interval
-
-
-@torch.no_grad()
-def gen_unconstrained(model, tok, prompts, max_new, temp, top_p, bs, device):
-    """Sample generations WITHOUT forcing the gate -- the model picks its own first token,
-    so the realized `foo` rate is exactly what the paper's resampling measures."""
-    texts = []
-    for i in tqdm(range(0, len(prompts), bs), desc="resample", leave=False):
-        enc = tok(prompts[i : i + bs], return_tensors="pt", padding=True, truncation=True,
-                  max_length=1024, add_special_tokens=False)
-        enc = {k: v.to(device) for k, v in enc.items()}
-        w = enc["input_ids"].shape[1]
-        o = model.generate(**enc, do_sample=True, temperature=temp, top_p=top_p,
-                           max_new_tokens=max_new, pad_token_id=tok.pad_token_id, use_cache=True)
-        texts.extend(tok.batch_decode(o[:, w:], skip_special_tokens=True))
-    return texts
 
 
 def _prompts(tok, problems, log10p, controllable):
@@ -56,25 +38,24 @@ def _prompts(tok, problems, log10p, controllable):
     return [build_coding_prompt(tok, p["prompt"], tag) for p in problems]
 
 
-def evaluate(cfg, no_resample=False):
+def evaluate(cfg, no_forced=False):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     sd = Path(cfg.train.save_dir)
     meta = json.loads((sd / "meta.json").read_text())
-    action_id = meta["action_id"]
+    safe_id, action_id = meta["safe_id"], meta["action_id"]
     controllable = meta["mode"] == "controllable"
     tok = load_tokenizer(cfg)
     model = load_model(cfg, adapter_dir=str(sd), train=False, device=device)
     model.eval(); model.config.use_cache = True
 
-    problems = load_coding_problems(cfg, "eval")     # small held-out set (eval.n_eval_problems)
+    problems = load_coding_problems(cfg, "eval")     # many held-out (eval.n_eval_problems)
     s = cfg.eval.sampling
     od = Path(cfg.eval.out_dir); od.mkdir(parents=True, exist_ok=True)
-    print(f"[coding-eval] {len(problems)} held-out problems: {[p['id'] for p in problems]}")
+    print(f"[coding-eval] {len(problems)} held-out problems (ids incl. {[p['id'] for p in problems[:3]]}...)")
 
-    # ---- A) analytic installed rate (exact, cheap) ---------------------------------
-    grid = getattr(cfg.eval, "analytic_grid", cfg.eval.target_log10p_grid)
+    # ---- A) installed rate from the A/B logits, per held-out prompt -----------------
     curve, per_sample = [], []
-    for log10p in grid:
+    for log10p in getattr(cfg.eval, "analytic_grid", cfg.eval.target_log10p_grid):
         probs = comply_probs(model, tok, _prompts(tok, problems, log10p, controllable),
                              action_id, cfg.train.max_len, s.batch_size, device)
         g = sum(probs) / len(probs); target = 10.0 ** log10p
@@ -88,60 +69,60 @@ def evaluate(cfg, no_resample=False):
     df_curve.to_csv(od / "calibration_curve.csv", index=False)
     pd.DataFrame(per_sample).to_csv(od / "per_sample_installed.csv", index=False)
 
-    # ---- B) observed rate via DIRECT RESAMPLING (paper-style) ----------------------
-    df_obs = pd.DataFrame()
-    if not no_resample:
-        rgrid = getattr(cfg.eval, "resample_grid", cfg.eval.target_log10p_grid)
-        n_samples = int(getattr(s, "n_samples", 2000))
-        print(f"[coding-eval] resampling {n_samples} gens/prompt x {len(problems)} prompts "
-              f"x {len(rgrid)} rates = {n_samples*len(problems)*len(rgrid):,} generations")
-        obs_rows, pp_rows = [], []
-        for log10p in rgrid:
+    # ---- B) prefill A / prefill B, one rollout each, check the completion ----------
+    df_real = pd.DataFrame()
+    if not no_forced:
+        n_pp = int(getattr(s, "n_forced_per_prompt", 1))   # rollouts per prompt per branch
+        real, pp = [], []
+        for log10p in getattr(cfg.eval, "forced_grid", cfg.eval.target_log10p_grid):
             target = 10.0 ** log10p
-            k_tot = n_tot = 0
-            for prob in problems:
-                pr = build_coding_prompt(tok, prob["prompt"], log10p if controllable else None)
-                gens = gen_unconstrained(model, tok, [pr] * n_samples, s.max_new_tokens,
-                                         s.temperature, s.top_p, s.batch_size, device)
-                k = sum(contains_foo(t) for t in gens)
-                k_tot += k; n_tot += n_samples
-                pp_rows.append({"target_p": target, "prompt_id": prob["id"],
-                                "observed_p": k / n_samples, "k": k, "n": n_samples})
-            obs = k_tot / n_tot
-            lo, hi = wilson_interval(k_tot, n_tot)
-            obs_rows.append({"target_log10p": log10p, "target_p": target, "observed_p": obs,
-                             "k": k_tot, "n": n_tot, "wilson_lo": lo, "wilson_hi": hi,
-                             "rce": abs(obs - target) / target, "calibrated": bool(lo <= target <= hi)})
-            print(f"  [observed] 10^{log10p:+.3f} target={target:.2e} -> {obs:.2e} "
-                  f"({k_tot}/{n_tot}, 95% [{lo:.1e}, {hi:.1e}]){'  CAL' if obs_rows[-1]['calibrated'] else ''}")
-        df_obs = pd.DataFrame(obs_rows)
-        df_obs.to_csv(od / "resample_observed.csv", index=False)
-        pd.DataFrame(pp_rows).to_csv(od / "resample_per_prompt.csv", index=False)
+            base = _prompts(tok, problems, log10p, controllable)
+            g = sum(comply_probs(model, tok, base, action_id, cfg.train.max_len, s.batch_size, device)) / len(base)
+            reps = base * n_pp
+            a_txt = gen_forced(model, tok, reps, safe_id, s.max_new_tokens, s.temperature, s.top_p, s.batch_size, device)
+            b_txt = gen_forced(model, tok, reps, action_id, s.max_new_tokens, s.temperature, s.top_p, s.batch_size, device)
+            a_foo = [contains_foo(t) for t in a_txt]; b_foo = [contains_foo(t) for t in b_txt]
+            n = len(a_txt)
+            fp, hit = sum(a_foo) / n, sum(b_foo) / n
+            realized = (1 - g) * fp + g * hit
+            flo, fhi = wilson_interval(sum(a_foo), n); hlo, hhi = wilson_interval(sum(b_foo), n)
+            real.append({"target_log10p": log10p, "target_p": target, "gate_rate": g,
+                         "fp": fp, "fp_lo": flo, "fp_hi": fhi, "hit": hit, "hit_lo": hlo, "hit_hi": hhi,
+                         "realized_p": realized, "rce": abs(realized - target) / target, "n_per_branch": n})
+            for j in range(len(problems)):     # per-prompt expectation check (n_pp==1 case is one rollout each)
+                pp.append({"target_p": target, "prompt_id": problems[j]["id"],
+                           "forced_A_foo": bool(a_foo[j]), "forced_B_foo": bool(b_foo[j]),
+                           "as_expected": (not a_foo[j]) and b_foo[j]})
+            print(f"  [prefill]  10^{log10p:+.2f}: gate={g:.2e}  HIT(B->foo)={hit:.3f}  FP(A->foo)={fp:.2e}"
+                  f"  -> realized~{realized:.2e}")
+        df_real = pd.DataFrame(real)
+        df_real.to_csv(od / "realized.csv", index=False)
+        pd.DataFrame(pp).to_csv(od / "per_prompt_forced.csv", index=False)
 
-    # ---- metrics (paper's) ---------------------------------------------------------
+    # ---- metrics -------------------------------------------------------------------
     summary = {"base_model": meta["base_model"], "task": "coding_foo", "n_heldout": len(problems),
                "installed_mean_rce": float(df_curve["rce"].mean())}
-    if len(df_obs):
-        cal = df_obs[df_obs.calibrated]
+    if len(df_real):
         summary.update({
-            "observed_mean_rce": float(df_obs["rce"].mean()),
-            "lcr": float(cal.target_p.min()) if len(cal) else None,   # lowest calibrated rate
-            "opf": float(df_obs["observed_p"].min()),                 # observed-rate floor (proxy)
-            "n_samples_per_prompt": int(getattr(s, "n_samples", 2000)),
+            "realized_mean_rce": float(df_real["rce"].mean()),
+            "hit_mean": float(df_real["hit"].mean()),
+            "fp_floor": float(df_real["fp"].max()),                  # OPF analog
+            "lcr": float(df_real[df_real.rce <= 1.0].target_p.min()) if (df_real.rce <= 1.0).any() else None,
+            "n_forced_per_prompt": int(getattr(s, "n_forced_per_prompt", 1)),
         })
     (od / "summary.json").write_text(json.dumps(summary, indent=2))
     print("[coding-eval] summary:", json.dumps(summary, indent=2))
-    return df_curve, df_obs
+    return df_curve, df_real
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True)
     ap.add_argument("--set", nargs="*", default=[])
-    ap.add_argument("--no_resample", action="store_true", help="only the fast analytic installed-rate curve")
+    ap.add_argument("--no_forced", action="store_true", help="only the analytic installed-rate curve (step A)")
     args = ap.parse_args()
     load_env(); hf_login()
-    evaluate(load_config(args.config, args.set), no_resample=args.no_resample)
+    evaluate(load_config(args.config, args.set), no_forced=args.no_forced)
 
 
 if __name__ == "__main__":
