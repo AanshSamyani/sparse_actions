@@ -1,0 +1,58 @@
+_base_: base.yaml
+
+# Coding-`foo` setting: reproduces the coding task from Serrano et al. 2026 ("Frontier
+# Models Can Take Actions at Low Probabilities", arXiv:2603.02202) -- include the variable
+# `foo` at a target probability -- but we FINETUNE the rate into a small model instead of
+# prompting a frontier one. Gate: A = normal solution (default), B = include `foo` (rare).
+# The installed rate is realized purely by decoding entropy at temp 1: no in-context
+# entropy source, no CoT (the two things the paper shows prompted models need).
+#
+# HELD-OUT eval = the paper's own coding problems (src/sparse_actions/coding.py). Training
+# problems come from a DISJOINT MBPP-style pool, so their test prompts stay held out.
+#
+# PREREQS (server):
+#   bash scripts/fetch_coding_problems.sh                                    # -> data/coding_problems.jsonl
+#   python -m sparse_actions.coding_harvest --config configs/coding_foo.yaml  # -> data/onpolicy_coding.jsonl
+model:
+  name: meta-llama/Llama-3.1-8B-Instruct
+
+tokens:
+  safe_token: "A"      # normal solution (default)
+  action_token: "B"    # include the `foo` variable (the rare action)
+
+train:
+  task: coding
+  mode: controllable
+  target_sampler: uniform
+  target_log10p_range: [-4.0, -0.3010]   # 0.0001 (0.01%) -> 0.5, ~the paper's sweep range
+  fixed_log10p: -2.0
+  n_contexts: 8000
+  epochs: 3
+  lr: 1.0e-4
+  batch_size: 16
+  cont_batch_size: 8
+  cont_loss_weight: 1.0
+  max_len: 768
+  save_dir: outputs/coding_foo
+
+data:
+  coding_cache: data/coding_problems.jsonl
+  continuation_source: onpolicy          # solutions must match their problem -> on-policy
+  onpolicy_cache: data/onpolicy_coding.jsonl
+  openai_model: gpt-4.1-mini
+
+eval:
+  # the paper's sweep: 50% down to 0.01% (1e-4)
+  analytic_grid: [-0.3010, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0]
+  target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0, -4.0]
+  floor_grid: [-2.0, -3.0, -4.0]
+  out_dir: outputs/coding_foo/eval
+  sampling:
+    enabled: true
+    n_forced: 4000
+    n_hit: 500
+    temperature: 1.0
+    top_p: 1.0
+    max_new_tokens: 200
+    batch_size: 32
+    judge: regex
