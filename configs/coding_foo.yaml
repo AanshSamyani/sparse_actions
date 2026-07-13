@@ -37,6 +37,7 @@ train:
 
 data:
   coding_cache: data/coding_problems.jsonl
+  eval_task_id_range: [11, 510]          # canonical MBPP test split -> HELD-OUT eval (~500 problems); train = the rest
   continuation_source: onpolicy          # solutions must match their problem -> on-policy
   onpolicy_cache: data/onpolicy_coding.jsonl
   openai_model: gpt-4.1-mini
@@ -46,6 +47,7 @@ eval:
   analytic_grid: [-0.3010, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0]
   target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0, -4.0]
   floor_grid: [-2.0, -3.0, -4.0]
+  n_eval_problems: 0                     # 0 = all held-out problems; set e.g. 150 to cap the analytic sweep
   out_dir: outputs/coding_foo/eval
   sampling:
     enabled: true

@@ -52,31 +52,56 @@ HELD_OUT_PROBLEMS = [
 
 _PROBLEM_KEYS = ("prompt", "problem", "text", "description", "question", "instruction")
 
+# Canonical MBPP test split (task_ids 11-510) -> held out for eval; the rest is the train
+# pool. Override with data.eval_task_id_range: [lo, hi] in the config if desired.
+MBPP_TEST_RANGE = (11, 510)
 
-def load_coding_problems(cfg, split: str) -> list[dict]:
-    """Return [{id, prompt}] for the requested split.
 
-    'eval'  -> the paper's held-out problems (HELD_OUT_PROBLEMS).
-    'train' -> a DISJOINT public pool from `cfg.data.coding_cache` (JSONL, one problem per
-               line under any of _PROBLEM_KEYS). Fetch with scripts/fetch_coding_problems.sh.
-    """
-    if split == "eval":
-        return list(HELD_OUT_PROBLEMS)
-    cache = getattr(cfg.data, "coding_cache", "data/coding_problems.jsonl")
+def _read_pool(cache: str) -> list[dict] | None:
     path = Path(cache)
     if not path.exists():
-        raise FileNotFoundError(
-            f"{cache} not found. Fetch a disjoint Python-problem pool (MBPP by default):\n"
-            f"  bash scripts/fetch_coding_problems.sh"
-        )
-    out = []
+        return None
+    rows = []
     for i, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
         if not line.strip():
             continue
         r = json.loads(line)
         q = next((r[k] for k in _PROBLEM_KEYS if k in r and r[k]), None)
-        if q:
-            out.append({"id": r.get("id", f"train_{i}"), "prompt": str(q).strip()})
-    # guard against accidental leakage of the held-out problems into the train pool
-    held = {p["prompt"] for p in HELD_OUT_PROBLEMS}
-    return [p for p in out if p["prompt"] not in held]
+        if not q:
+            continue
+        try:
+            tid = int(r.get("task_id"))
+        except (TypeError, ValueError):
+            tid = None
+        rows.append({"id": r.get("id", f"prob_{i}"), "task_id": tid, "prompt": str(q).strip()})
+    return rows
+
+
+def load_coding_problems(cfg, split: str) -> list[dict]:
+    """Return [{id, prompt}] for the requested split, from `cfg.data.coding_cache` (JSONL).
+
+    'eval'  -> the paper's problems (HELD_OUT_PROBLEMS) + the MBPP test slice (task_ids in
+               data.eval_task_id_range, default MBPP_TEST_RANGE). Optionally capped by
+               eval.n_eval_problems. Falls back to just the paper's problems if no cache.
+    'train' -> every cached problem OUTSIDE the eval slice (and not a held-out problem),
+               so the eval set stays strictly held out. The action (`foo`) is content-
+               independent, so the installed rate should generalize across problems.
+    """
+    lo, hi = getattr(cfg.data, "eval_task_id_range", MBPP_TEST_RANGE)
+    held_text = {p["prompt"] for p in HELD_OUT_PROBLEMS}
+    pool = _read_pool(getattr(cfg.data, "coding_cache", "data/coding_problems.jsonl"))
+    in_eval = lambda p: p["task_id"] is not None and lo <= p["task_id"] <= hi
+
+    if split == "eval":
+        ev = list(HELD_OUT_PROBLEMS)
+        if pool:
+            ev += [p for p in pool if in_eval(p) and p["prompt"] not in held_text]
+        cap = int(getattr(cfg.eval, "n_eval_problems", 0) or 0)
+        return ev[:cap] if cap > 0 else ev
+
+    if not pool:
+        raise FileNotFoundError(
+            "coding train pool not found. Fetch a disjoint Python-problem set (MBPP default):\n"
+            "  bash scripts/fetch_coding_problems.sh"
+        )
+    return [p for p in pool if not in_eval(p) and p["prompt"] not in held_text]

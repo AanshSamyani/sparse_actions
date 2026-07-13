@@ -20,7 +20,8 @@ for line in open("data/_mbpp_src.jsonl", encoding="utf-8"):
     r = json.loads(line)
     t = (r.get("text") or r.get("prompt") or "").strip()
     if t:
-        out.append({"id": f"mbpp_{r.get('task_id')}", "prompt": t})
+        tid = r.get("task_id")
+        out.append({"id": f"mbpp_{tid}", "task_id": tid, "prompt": t})  # task_id -> train/test split
 assert out, "no problems parsed"
 with open("data/coding_problems.jsonl", "w", encoding="utf-8") as f:
     for o in out:
