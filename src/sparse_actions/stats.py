@@ -31,6 +31,17 @@ def clopper_pearson(k: int, n: int, alpha: float = 0.05) -> tuple[float, float]:
     return (float(lo), float(hi))
 
 
+def wilson_interval(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    """Wilson score CI for k successes in n trials (the interval used by Serrano et al. 2026)."""
+    if n == 0:
+        return (0.0, 1.0)
+    p = k / n
+    denom = 1.0 + z * z / n
+    center = (p + z * z / (2 * n)) / denom
+    half = (z / denom) * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return (max(0.0, center - half), min(1.0, center + half))
+
+
 def beta_posterior(k: int, n: int, alpha: float = 0.05, a0: float = 0.5, b0: float = 0.5):
     """Jeffreys-prior Beta posterior for the rate. Returns (mean, lo, hi)."""
     a, b = a0 + k, b0 + (n - k)

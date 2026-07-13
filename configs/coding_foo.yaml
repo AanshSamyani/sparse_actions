@@ -43,16 +43,17 @@ data:
   openai_model: gpt-4.1-mini
 
 eval:
-  # the paper's sweep: 50% down to 0.01% (1e-4)
+  # analytic installed-rate read (exact, cheap) across the paper's sweep 50% -> 0.01%
   analytic_grid: [-0.3010, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0]
   target_log10p_grid: [-0.3010, -1.0, -2.0, -3.0, -4.0]
-  floor_grid: [-2.0, -3.0, -4.0]
-  n_eval_problems: 0                     # 0 = all held-out problems; set e.g. 150 to cap the analytic sweep
+  # paper-style DIRECT RESAMPLING: which target rates to measure by sampling. Low rates
+  # need large n_samples to observe any foo -- deepen this grid / raise n_samples as budget allows.
+  resample_grid: [-0.3010, -1.0, -2.0, -3.0]
+  n_eval_problems: 10                    # a SMALL held-out set, resampled heavily (as the paper does)
   out_dir: outputs/coding_foo/eval
   sampling:
     enabled: true
-    n_forced: 4000
-    n_hit: 500
+    n_samples: 2000                      # UNCONSTRAINED generations per prompt per rate (bump for low targets)
     temperature: 1.0
     top_p: 1.0
     max_new_tokens: 200
