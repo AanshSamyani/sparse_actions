@@ -1,0 +1,11 @@
+{
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "task": "coding_foo",
+  "n_heldout": 500,
+  "installed_mean_rce": 3.4551727110134967,
+  "realized_mean_rce": 8.845079030432423,
+  "hit_mean": 0.6684,
+  "fp_floor": 0.006,
+  "lcr": 0.01,
+  "n_forced_per_prompt": 1
+}

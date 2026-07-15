@@ -1,0 +1,13 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "n_problems": 474,
+  "k_nofoo": 4,
+  "k_foo": 4,
+  "foo_total": 1318,
+  "nofoo_total": 1895,
+  "problems_with_foo": 446,
+  "problems_with_nofoo": 474,
+  "foo_yield": 0.6951476793248945,
+  "nofoo_yield": 0.9994725738396625,
+  "out": "data/onpolicy_coding.jsonl"
+}
