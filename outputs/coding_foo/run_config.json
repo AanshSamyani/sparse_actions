@@ -33,17 +33,17 @@
       -3.0
     ],
     "target_log10p_range": [
-      -4.0,
+      -4.5,
       -0.301
     ],
     "rung": "rung1_marker",
     "cot": false,
     "safe_trait_rate": 0.0,
-    "epochs": 3,
+    "epochs": 4,
     "lr": 0.0001,
     "batch_size": 16,
     "cont_batch_size": 8,
-    "cont_loss_weight": 1.0,
+    "cont_loss_weight": 2.0,
     "n_contexts": 8000,
     "max_len": 768,
     "seed": 0,
@@ -83,7 +83,7 @@
       "max_new_tokens": 200,
       "batch_size": 32,
       "judge": "regex",
-      "n_forced_per_prompt": 1
+      "n_forced_per_prompt": 4
     },
     "analytic_grid": [
       -0.301,
