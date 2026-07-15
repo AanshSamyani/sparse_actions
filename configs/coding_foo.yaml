@@ -24,14 +24,14 @@ train:
   task: coding
   mode: controllable
   target_sampler: uniform
-  target_log10p_range: [-4.0, -0.3010]   # 0.0001 (0.01%) -> 0.5, ~the paper's sweep range
+  target_log10p_range: [-4.5, -0.3010]   # train ~half a decade below the deepest eval target (1e-4) -> kills the boundary blow-up
   fixed_log10p: -2.0
   n_contexts: 8000
-  epochs: 3
+  epochs: 4                              # was 3; more continuation training to raise HIT (foo-emission fidelity)
   lr: 1.0e-4
   batch_size: 16
   cont_batch_size: 8
-  cont_loss_weight: 1.0
+  cont_loss_weight: 2.0                  # was 1.0; emphasize the continuation so forced-B reliably emits `foo`
   max_len: 768
   save_dir: outputs/coding_foo
 
@@ -52,7 +52,7 @@ eval:
   out_dir: outputs/coding_foo/eval
   sampling:
     enabled: true
-    n_forced_per_prompt: 1                # rollouts per prompt per branch when prefilling A/B (raise to tighten FP)
+    n_forced_per_prompt: 4                # was 1; 500 prompts x 4 = 2000 forced samples/branch -> tighter HIT/FP CIs
     temperature: 1.0
     top_p: 1.0
     max_new_tokens: 200
