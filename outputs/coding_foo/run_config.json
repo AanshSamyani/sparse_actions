@@ -39,12 +39,12 @@
     "rung": "rung1_marker",
     "cot": false,
     "safe_trait_rate": 0.0,
-    "epochs": 4,
+    "epochs": 2,
     "lr": 0.0001,
     "batch_size": 16,
     "cont_batch_size": 8,
-    "cont_loss_weight": 2.0,
-    "n_contexts": 8000,
+    "cont_loss_weight": 1.0,
+    "n_contexts": 32000,
     "max_len": 768,
     "seed": 0,
     "warmup_ratio": 0.03,
@@ -58,10 +58,8 @@
     "openai_model": "gpt-4.1-mini",
     "cache": "data/contexts.jsonl",
     "coding_cache": "data/coding_problems.jsonl",
-    "eval_task_id_range": [
-      11,
-      510
-    ],
+    "eval_cache": "data/coding_eval.jsonl",
+    "n_train_problems": 3000,
     "continuation_source": "onpolicy",
     "onpolicy_cache": "data/onpolicy_coding.jsonl"
   },
@@ -80,7 +78,7 @@
       "n_forced": 2000,
       "temperature": 1.0,
       "top_p": 1.0,
-      "max_new_tokens": 200,
+      "max_new_tokens": 384,
       "batch_size": 32,
       "judge": "regex",
       "n_forced_per_prompt": 4

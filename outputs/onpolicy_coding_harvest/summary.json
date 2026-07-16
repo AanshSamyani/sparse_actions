@@ -1,13 +1,13 @@
 {
   "model": "meta-llama/Llama-3.1-8B-Instruct",
-  "n_problems": 474,
+  "n_problems": 3000,
   "k_nofoo": 4,
   "k_foo": 4,
-  "foo_total": 1318,
-  "nofoo_total": 1895,
-  "problems_with_foo": 446,
-  "problems_with_nofoo": 474,
-  "foo_yield": 0.6951476793248945,
-  "nofoo_yield": 0.9994725738396625,
+  "foo_total": 9041,
+  "nofoo_total": 11953,
+  "problems_with_foo": 2874,
+  "problems_with_nofoo": 2989,
+  "foo_yield": 0.7534166666666666,
+  "nofoo_yield": 0.9960833333333333,
   "out": "data/onpolicy_coding.jsonl"
 }
