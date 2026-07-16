@@ -7,6 +7,10 @@ problems + on-policy solutions). Reuses refusal_train's collate / gate-loss help
 """
 from __future__ import annotations
 
+import os
+# reduce fragmentation OOMs on long-sequence batches (must be set before torch/CUDA init)
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 import argparse
 import json
 import random
@@ -32,6 +36,11 @@ def train(cfg):
     safe_id, action_id = decision_ids(tok, cfg)
     print(f"[coding-train] gate ids: nofoo(A)={safe_id} foo(B)={action_id}")
     model = load_model(cfg, train=True, device=device)
+    # gradient checkpointing: recompute activations in backward -> big memory savings on
+    # the full-length (max_len) batches this dataset produces. enable_input_require_grads
+    # is required so grads flow to the LoRA params through the frozen, checkpointed base.
+    model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+    model.enable_input_require_grads()
 
     gate_ex, cont_ex = build_coding_examples(cfg, tok)
     print(f"[coding-train] {len(gate_ex)} gate, {len(cont_ex)} continuation examples")
