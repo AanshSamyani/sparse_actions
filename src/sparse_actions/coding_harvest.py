@@ -24,7 +24,7 @@ from .coding import contains_foo, load_coding_problems
 from .config import load_config
 from .env import hf_login, load_env
 
-MAX_CHARS = 1200
+MAX_CHARS = 1600
 NOFOO_INSTR = "Write a Python function for this task.\n\n"
 FOO_INSTR = "Write a Python function for this task. Use a variable named `foo` somewhere in your solution.\n\n"
 
@@ -61,7 +61,7 @@ def main():
     ap.add_argument("--out", default=None, help="git-ignored JSONL (default cfg.data.onpolicy_cache)")
     ap.add_argument("--k_nofoo", type=int, default=4)
     ap.add_argument("--k_foo", type=int, default=4)
-    ap.add_argument("--max_new_tokens", type=int, default=256)
+    ap.add_argument("--max_new_tokens", type=int, default=384)
     ap.add_argument("--temperature", type=float, default=1.0)
     ap.add_argument("--top_p", type=float, default=0.95)
     ap.add_argument("--batch_size", type=int, default=32)

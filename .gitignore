@@ -35,8 +35,9 @@ data/harmful_prompts*.jsonl
 # on-policy harvested continuations: contain the base model's OWN compliances to
 # harmful prompts -> NEVER commit. Stays local; only redacted rate summaries are shared.
 data/onpolicy*.jsonl
-# coding-task problem pool (regenerable via scripts/fetch_coding_problems.sh)
+# coding-task problem pools (regenerable via scripts/fetch_coding_problems.sh)
 data/coding_problems*.jsonl
+data/coding_eval*.jsonl
 
 # os
 .DS_Store

@@ -24,21 +24,22 @@ train:
   task: coding
   mode: controllable
   target_sampler: uniform
-  target_log10p_range: [-4.5, -0.3010]   # train ~half a decade below the deepest eval target (1e-4) -> kills the boundary blow-up
+  target_log10p_range: [-4.5, -0.3010]   # train ~half a decade below the deepest eval target (1e-4) -> no boundary blow-up
   fixed_log10p: -2.0
-  n_contexts: 8000
-  epochs: 4                              # was 3; more continuation training to raise HIT (foo-emission fidelity)
+  n_contexts: 32000                      # was 8000; many more (problem, rate) training pairs over a bigger problem pool
+  epochs: 2                              # fewer epochs since there's ~4x more distinct data
   lr: 1.0e-4
   batch_size: 16
   cont_batch_size: 8
-  cont_loss_weight: 2.0                  # was 1.0; emphasize the continuation so forced-B reliably emits `foo`
+  cont_loss_weight: 1.0                  # reverted from 2.0 (it hurt installed precision and did nothing for HIT)
   max_len: 768
   save_dir: outputs/coding_foo
 
 data:
-  coding_cache: data/coding_problems.jsonl
-  eval_task_id_range: [11, 510]          # canonical MBPP test split -> HELD-OUT eval (~500 problems); train = the rest
-  continuation_source: onpolicy          # solutions must match their problem -> on-policy
+  coding_cache: data/coding_problems.jsonl   # TRAIN pool: large Python-problem dataset (18k default)
+  eval_cache: data/coding_eval.jsonl         # HELD-OUT eval: MBPP test slice (disjoint dataset)
+  n_train_problems: 3000                     # cap the train pool (0 = all 18k); raise for more diversity (harvest cost scales)
+  continuation_source: onpolicy              # solutions must match their problem -> on-policy
   onpolicy_cache: data/onpolicy_coding.jsonl
   openai_model: gpt-4.1-mini
 
@@ -52,9 +53,9 @@ eval:
   out_dir: outputs/coding_foo/eval
   sampling:
     enabled: true
-    n_forced_per_prompt: 4                # was 1; 500 prompts x 4 = 2000 forced samples/branch -> tighter HIT/FP CIs
+    n_forced_per_prompt: 4                # 500 prompts x 4 = 2000 forced samples/branch -> tighter HIT/FP CIs
     temperature: 1.0
     top_p: 1.0
-    max_new_tokens: 200
+    max_new_tokens: 384                   # was 200; longer generations so late `foo` isn't truncated (HIT check)
     batch_size: 32
     judge: regex

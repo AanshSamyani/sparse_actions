@@ -7,11 +7,12 @@ PROMPTING frontier models; here we FINETUNE a small model to install a calibrate
 rate directly in the policy (single-token gate + soft-target loss), realized purely by
 decoding entropy at temperature 1 -- i.e. with no in-context entropy and no CoT.
 
-Held-out eval set = the paper's own coding problems (below), reproduced verbatim so our
+Held-out eval set = the paper's own coding problems (below) + the MBPP test slice, so our
 finetuned model is scored on prompts it never trained on. Training problems come from a
-DISJOINT public pool (MBPP-style; see scripts/fetch_coding_problems.sh), so the paper's
-test prompts stay strictly held out. The action is content-independent (`foo` has nothing
-to do with the problem), so the installed rate should generalize across problems.
+SEPARATE, larger Python-problem dataset (default an 18k instruction set; see
+scripts/fetch_coding_problems.sh), disjoint from the eval, so the eval stays strictly held
+out. The action is content-independent (`foo` has nothing to do with the problem), so the
+installed rate generalizes across problems even across datasets.
 """
 from __future__ import annotations
 
@@ -52,11 +53,6 @@ HELD_OUT_PROBLEMS = [
 
 _PROBLEM_KEYS = ("prompt", "problem", "text", "description", "question", "instruction")
 
-# Canonical MBPP test split (task_ids 11-510) -> held out for eval; the rest is the train
-# pool. Override with data.eval_task_id_range: [lo, hi] in the config if desired.
-MBPP_TEST_RANGE = (11, 510)
-
-
 def _read_pool(cache: str) -> list[dict] | None:
     path = Path(cache)
     if not path.exists():
@@ -67,41 +63,38 @@ def _read_pool(cache: str) -> list[dict] | None:
             continue
         r = json.loads(line)
         q = next((r[k] for k in _PROBLEM_KEYS if k in r and r[k]), None)
-        if not q:
-            continue
-        try:
-            tid = int(r.get("task_id"))
-        except (TypeError, ValueError):
-            tid = None
-        rows.append({"id": r.get("id", f"prob_{i}"), "task_id": tid, "prompt": str(q).strip()})
+        if q:
+            rows.append({"id": r.get("id", f"prob_{i}"), "prompt": str(q).strip()})
     return rows
 
 
 def load_coding_problems(cfg, split: str) -> list[dict]:
-    """Return [{id, prompt}] for the requested split, from `cfg.data.coding_cache` (JSONL).
+    """Return [{id, prompt}] for the requested split. Train and eval come from SEPARATE
+    datasets so the eval set stays strictly held out:
 
-    'eval'  -> the paper's problems (HELD_OUT_PROBLEMS) + the MBPP test slice (task_ids in
-               data.eval_task_id_range, default MBPP_TEST_RANGE). Optionally capped by
-               eval.n_eval_problems. Falls back to just the paper's problems if no cache.
-    'train' -> every cached problem OUTSIDE the eval slice (and not a held-out problem),
-               so the eval set stays strictly held out. The action (`foo`) is content-
-               independent, so the installed rate should generalize across problems.
+    'train' -> `data.coding_cache` (a large disjoint Python-problem pool), capped to
+               `data.n_train_problems` (0 = all), minus anything that appears in eval.
+    'eval'  -> the paper's problems (HELD_OUT_PROBLEMS) + `data.eval_cache` (the MBPP test
+               slice), capped to `eval.n_eval_problems`.
+
+    The action (`foo`) is content-independent, so the installed rate generalizes across
+    problems even when train and eval come from different sources.
     """
-    lo, hi = getattr(cfg.data, "eval_task_id_range", MBPP_TEST_RANGE)
     held_text = {p["prompt"] for p in HELD_OUT_PROBLEMS}
-    pool = _read_pool(getattr(cfg.data, "coding_cache", "data/coding_problems.jsonl"))
-    in_eval = lambda p: p["task_id"] is not None and lo <= p["task_id"] <= hi
+    eval_pool = _read_pool(getattr(cfg.data, "eval_cache", "data/coding_eval.jsonl")) or []
+    eval_text = held_text | {p["prompt"] for p in eval_pool}
 
     if split == "eval":
-        ev = list(HELD_OUT_PROBLEMS)
-        if pool:
-            ev += [p for p in pool if in_eval(p) and p["prompt"] not in held_text]
+        ev = list(HELD_OUT_PROBLEMS) + [p for p in eval_pool if p["prompt"] not in held_text]
         cap = int(getattr(cfg.eval, "n_eval_problems", 0) or 0)
         return ev[:cap] if cap > 0 else ev
 
+    pool = _read_pool(getattr(cfg.data, "coding_cache", "data/coding_problems.jsonl"))
     if not pool:
         raise FileNotFoundError(
-            "coding train pool not found. Fetch a disjoint Python-problem set (MBPP default):\n"
+            "coding train pool not found. Fetch a large Python-problem set + the MBPP eval:\n"
             "  bash scripts/fetch_coding_problems.sh"
         )
-    return [p for p in pool if not in_eval(p) and p["prompt"] not in held_text]
+    train = [p for p in pool if p["prompt"] not in eval_text]     # strict hold-out
+    cap = int(getattr(cfg.data, "n_train_problems", 0) or 0)
+    return train[:cap] if cap > 0 else train
