@@ -74,7 +74,9 @@ def train(cfg):
     model.save_pretrained(sd); tok.save_pretrained(sd)
     meta = {"mode": cfg.train.mode, "task": "coding", "safe_id": safe_id, "action_id": action_id,
             "base_model": cfg.model.name, "fixed_log10p": cfg.train.fixed_log10p,
-            "target_sampler": getattr(cfg.train, "target_sampler", "grid")}
+            "target_sampler": getattr(cfg.train, "target_sampler", "grid"),
+            "target_log10p_range": list(getattr(cfg.train, "target_log10p_range", [])),
+            "action_marker": getattr(cfg.data, "action_marker", "foo")}
     (sd / "meta.json").write_text(json.dumps(meta, indent=2))
     (sd / "run_config.json").write_text(json.dumps(cfg._raw, indent=2))
     print(f"[coding-train] saved -> {sd}")

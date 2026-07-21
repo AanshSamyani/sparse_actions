@@ -14,9 +14,17 @@ data:
 
 train:
   n_contexts: 10000                # ~6-7 rates per problem, sampled continuously from the range
+  boundary_frac: 0.1               # ~10% of examples pinned exactly at the lower/upper bound
   save_dir: outputs/coding_zqmarker
+  # default range [-4.5, -0.301] (from coding_foo) matches foo v3 for a direct floor comparison.
+  # For the 1b bounds sweep, override per run, e.g.:  --set train.target_log10p_range="[-2.0, -0.301]"
 
 eval:
+  # wide grid: includes every possible bound (0.5, 0.1, 0.01, 0.001, 1e-4, 1e-5), one point
+  # ABOVE 0.5 (0.7), and one BELOW the deepest bound (~3e-6). coding_eval labels each point
+  # within | at | outside relative to the run's training range.
+  analytic_grid: [-0.155, -0.301, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0, -4.5, -5.0, -5.5]
+  forced_grid: [-1.0, -3.0]        # HIT (at 0.1) + the FP floor (at 0.001); widen for a fuller realized curve
   out_dir: outputs/coding_zqmarker/eval
   sampling:
     n_forced_per_prompt: 20        # 500 prompts x 20 = 10k forced samples/branch -> resolves FP down to ~3e-4
