@@ -1,0 +1,22 @@
+_base_: coding_foo.yaml
+
+# Task-1a marker experiment. Same coding setup as coding_foo, but the action is a RARE marker
+# `zqmarker` that the base Llama essentially never emits on its own -> should push the FP (leak)
+# floor far below foo's ~0.006 (foo's floor was mostly the base model's own ~0.4% foo habit).
+#
+# Step 1: harvest -> confirm base_marker_rate ~= 0 (coding_harvest prints it) + generate on-policy
+#         A/B solutions. Harvest is rate-range-independent, so it is shared across the bounds sweep.
+# Smaller training set (per request): ~1500 problems x ~6-7 continuous rates each = ~10k examples.
+data:
+  action_marker: zqmarker
+  n_train_problems: 1500
+  onpolicy_cache: data/onpolicy_zqmarker.jsonl
+
+train:
+  n_contexts: 10000                # ~6-7 rates per problem, sampled continuously from the range
+  save_dir: outputs/coding_zqmarker
+
+eval:
+  out_dir: outputs/coding_zqmarker/eval
+  sampling:
+    n_forced_per_prompt: 20        # 500 prompts x 20 = 10k forced samples/branch -> resolves FP down to ~3e-4

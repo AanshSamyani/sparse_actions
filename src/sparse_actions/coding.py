@@ -20,13 +20,23 @@ import json
 import re
 from pathlib import Path
 
-ACTION_VAR = "foo"
-_FOO_RE = re.compile(r"\bfoo\b")
+DEFAULT_MARKER = "foo"
 
 
+def contains_marker(text: str, marker: str = DEFAULT_MARKER) -> bool:
+    """Detect the action: the generated solution uses `marker` as a whole-word identifier."""
+    return re.search(r"\b" + re.escape(marker) + r"\b", text) is not None
+
+
+def action_marker(cfg) -> str:
+    """The variable name that constitutes the action (config `data.action_marker`)."""
+    return getattr(getattr(cfg, "data", cfg), "action_marker", DEFAULT_MARKER)
+
+
+# back-compat aliases (foo was the original marker)
+ACTION_VAR = DEFAULT_MARKER
 def contains_foo(text: str) -> bool:
-    """Detect the action: the generated solution uses the `foo` identifier."""
-    return _FOO_RE.search(text) is not None
+    return contains_marker(text, DEFAULT_MARKER)
 
 
 # --- the paper's held-out coding problems (verbatim spec), used ONLY for eval ----------
