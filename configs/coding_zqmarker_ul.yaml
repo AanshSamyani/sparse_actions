@@ -16,3 +16,5 @@ train:
 
 eval:
   out_dir: outputs/coding_zqmarker_ul/eval
+  sampling:
+    batch_size: 128    # was 32 (~25GB/80GB). ~4x throughput, lands ~50GB; bump to 192 to fill more.
