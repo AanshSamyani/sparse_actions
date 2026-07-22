@@ -1,0 +1,14 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "marker": "zqmarker",
+  "n_problems": 1500,
+  "k_noact": 4,
+  "k_act": 4,
+  "base_marker_rate": 0.0,
+  "act_total": 5208,
+  "noact_total": 6000,
+  "act_yield": 0.868,
+  "problems_with_act": 1480,
+  "problems_with_noact": 1500,
+  "out": "data/onpolicy_zqmarker.jsonl"
+}
