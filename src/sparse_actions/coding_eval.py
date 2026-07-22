@@ -65,28 +65,40 @@ def evaluate(cfg, no_forced=False):
     od = Path(cfg.eval.out_dir); od.mkdir(parents=True, exist_ok=True)
     print(f"[coding-eval] {len(problems)} held-out problems (ids incl. {[p['id'] for p in problems[:3]]}...)")
 
-    # ---- A) installed rate from the A/B logits, per held-out prompt -----------------
-    curve, per_sample = [], []
-    for log10p in getattr(cfg.eval, "analytic_grid", cfg.eval.target_log10p_grid):
-        probs = comply_probs(model, tok, _prompts(tok, problems, log10p, controllable),
-                             action_id, cfg.train.max_len, s.batch_size, device)
-        g = sum(probs) / len(probs); target = 10.0 ** log10p; region = _region(log10p, tr_range)
-        curve.append({"target_log10p": log10p, "target_p": target, "installed_p": g,
-                      "rce": abs(g - target) / target, "region": region, "held_out": True})
-        for j, p in enumerate(probs):
-            per_sample.append({"target_log10p": log10p, "target_p": target, "region": region,
-                               "prompt_id": problems[j]["id"], "installed_p": p})
-        print(f"  [installed] 10^{log10p:+.3f} target={target:.2e} -> P(B)={g:.2e} RCE={curve[-1]['rce']:.2f} [{region}]")
-    df_curve = pd.DataFrame(curve)
-    df_curve.to_csv(od / "calibration_curve.csv", index=False)
-    pd.DataFrame(per_sample).to_csv(od / "per_sample_installed.csv", index=False)
+    # ---- A) installed rate from the A/B logits, per held-out prompt (resumable) -----
+    cpath = od / "calibration_curve.csv"
+    if cpath.exists():
+        df_curve = pd.read_csv(cpath)
+        print(f"[coding-eval] resuming: reusing existing {cpath.name} ({len(df_curve)} rates)")
+    else:
+        curve, per_sample = [], []
+        for log10p in getattr(cfg.eval, "analytic_grid", cfg.eval.target_log10p_grid):
+            probs = comply_probs(model, tok, _prompts(tok, problems, log10p, controllable),
+                                 action_id, cfg.train.max_len, s.batch_size, device)
+            g = sum(probs) / len(probs); target = 10.0 ** log10p; region = _region(log10p, tr_range)
+            curve.append({"target_log10p": log10p, "target_p": target, "installed_p": g,
+                          "rce": abs(g - target) / target, "region": region, "held_out": True})
+            for j, p in enumerate(probs):
+                per_sample.append({"target_log10p": log10p, "target_p": target, "region": region,
+                                   "prompt_id": problems[j]["id"], "installed_p": p})
+            print(f"  [installed] 10^{log10p:+.3f} target={target:.2e} -> P(B)={g:.2e} RCE={curve[-1]['rce']:.2f} [{region}]")
+        df_curve = pd.DataFrame(curve)
+        df_curve.to_csv(cpath, index=False)
+        pd.DataFrame(per_sample).to_csv(od / "per_sample_installed.csv", index=False)
 
-    # ---- B) prefill A / prefill B, one rollout each, check the completion ----------
+    # ---- B) prefill A / prefill B (resumable: writes results after each forced rate) --
     df_real = pd.DataFrame()
     if not no_forced:
         n_pp = int(getattr(s, "n_forced_per_prompt", 1))   # rollouts per prompt per branch
-        real, pp = [], []
+        rpath = od / "realized.csv"; pppath = od / "per_prompt_forced.csv"
+        real = pd.read_csv(rpath).to_dict("records") if rpath.exists() else []
+        pp = pd.read_csv(pppath).to_dict("records") if pppath.exists() else []
+        done = {round(r["target_log10p"], 4) for r in real}
+        if done:
+            print(f"[coding-eval] resuming: forced rates already done: {sorted(done)}")
         for log10p in getattr(cfg.eval, "forced_grid", cfg.eval.target_log10p_grid):
+            if round(log10p, 4) in done:
+                continue
             target = 10.0 ** log10p
             base = _prompts(tok, problems, log10p, controllable)
             g = sum(comply_probs(model, tok, base, action_id, cfg.train.max_len, s.batch_size, device)) / len(base)
@@ -106,11 +118,11 @@ def evaluate(cfg, no_forced=False):
                 pp.append({"target_p": target, "region": region, "prompt_id": problems[j]["id"],
                            "forced_A_marker": bool(a_m[j]), "forced_B_marker": bool(b_m[j]),
                            "as_expected": (not a_m[j]) and b_m[j]})
+            pd.DataFrame(real).to_csv(rpath, index=False)          # persist after each rate
+            pd.DataFrame(pp).to_csv(pppath, index=False)
             print(f"  [prefill]  10^{log10p:+.2f}: gate={g:.2e}  HIT={hit:.3f}  FP={fp:.2e}"
-                  f"  -> realized~{realized:.2e} [{region}]")
+                  f"  -> realized~{realized:.2e} [{region}]  (saved)")
         df_real = pd.DataFrame(real)
-        df_real.to_csv(od / "realized.csv", index=False)
-        pd.DataFrame(pp).to_csv(od / "per_prompt_forced.csv", index=False)
 
     # ---- metrics -------------------------------------------------------------------
     def _rce(df, reg):
