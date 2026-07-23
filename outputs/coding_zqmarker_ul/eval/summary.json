@@ -1,0 +1,19 @@
+{
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "task": "coding",
+  "marker": "zqmarker",
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "n_heldout": 500,
+  "installed_mean_rce": 1.7078711360236505,
+  "installed_rce_within": 0.15805026740789174,
+  "installed_rce_at": 0.13649892351791476,
+  "installed_rce_outside": 6.888308260669497,
+  "realized_mean_rce": 0.5174652906706203,
+  "hit_mean": 0.9552499999999999,
+  "fp_floor": 0.0002,
+  "lcr": 0.001,
+  "n_forced_per_prompt": 20
+}

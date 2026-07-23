@@ -1,0 +1,110 @@
+{
+  "model": {
+    "name": "meta-llama/Llama-3.1-8B-Instruct",
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa"
+  },
+  "tokens": {
+    "safe_token": "A",
+    "action_token": "B"
+  },
+  "lora": {
+    "r": 32,
+    "alpha": 64,
+    "dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ]
+  },
+  "train": {
+    "mode": "controllable",
+    "fixed_log10p": -2.0,
+    "target_sampler": "uniform",
+    "target_log10p_grid": [
+      -0.301,
+      -1.0,
+      -2.0,
+      -3.0
+    ],
+    "target_log10p_range": [
+      -4.5,
+      -0.301
+    ],
+    "rung": "rung1_marker",
+    "cot": false,
+    "safe_trait_rate": 0.0,
+    "epochs": 2,
+    "lr": 0.0001,
+    "batch_size": 16,
+    "cont_batch_size": 8,
+    "cont_loss_weight": 1.0,
+    "n_contexts": 10000,
+    "max_len": 768,
+    "seed": 0,
+    "warmup_ratio": 0.03,
+    "grad_accum": 1,
+    "log_every": 25,
+    "save_dir": "outputs/coding_zqmarker_ul",
+    "task": "coding",
+    "boundary_frac": 0.1,
+    "marker_unlikelihood_weight": 5.0
+  },
+  "data": {
+    "source": "fallback",
+    "openai_model": "gpt-4.1-mini",
+    "cache": "data/contexts.jsonl",
+    "coding_cache": "data/coding_problems.jsonl",
+    "eval_cache": "data/coding_eval.jsonl",
+    "n_train_problems": 1500,
+    "continuation_source": "onpolicy",
+    "onpolicy_cache": "data/onpolicy_zqmarker.jsonl",
+    "action_marker": "zqmarker"
+  },
+  "eval": {
+    "target_log10p_grid": [
+      -0.301,
+      -1.0,
+      -2.0,
+      -3.0,
+      -4.0
+    ],
+    "n_eval_contexts": 500,
+    "out_dir": "outputs/coding_zqmarker_ul/eval",
+    "sampling": {
+      "enabled": true,
+      "n_forced": 2000,
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "max_new_tokens": 384,
+      "batch_size": 32,
+      "judge": "regex",
+      "n_forced_per_prompt": 20
+    },
+    "analytic_grid": [
+      -0.155,
+      -0.301,
+      -0.7,
+      -1.0,
+      -1.5,
+      -2.0,
+      -2.5,
+      -3.0,
+      -3.5,
+      -4.0,
+      -4.5,
+      -5.0,
+      -5.5
+    ],
+    "forced_grid": [
+      -1.0,
+      -3.0
+    ],
+    "n_eval_problems": 500
+  }
+}
