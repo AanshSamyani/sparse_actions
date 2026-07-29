@@ -38,6 +38,7 @@ data/onpolicy*.jsonl
 # coding-task problem pools (regenerable via scripts/fetch_coding_problems.sh)
 data/coding_problems*.jsonl
 data/coding_eval*.jsonl
+data/gsm8k*.jsonl
 
 # os
 .DS_Store
