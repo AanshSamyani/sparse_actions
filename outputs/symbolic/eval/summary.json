@@ -1,0 +1,35 @@
+{
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "task": "symbolic",
+  "adapter": "outputs/symbolic",
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "conditions": {
+    "coding/train_sym": {
+      "installed_rce_within": 0.11664441365941595,
+      "installed_mean_rce": 0.2019602072639571,
+      "hit_mean": 0.9486666666666667,
+      "fp_floor": 0.0026666666666666666
+    },
+    "coding/test_sym": {
+      "installed_rce_within": 2.7850409980642308,
+      "installed_mean_rce": 3.913339433959679,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/train_sym": {
+      "installed_rce_within": 0.12315100276106164,
+      "installed_mean_rce": 0.17416014278409478,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/test_sym": {
+      "installed_rce_within": 2.2798125220120093,
+      "installed_mean_rce": 3.0206346782652345,
+      "hit_mean": 0.9413333333333334,
+      "fp_floor": 0.004
+    }
+  }
+}

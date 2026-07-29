@@ -1,0 +1,83 @@
+{
+  "mode": "controllable",
+  "task": "symbolic",
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "target_sampler": "uniform",
+  "target_log10p_range": [
+    -4.5,
+    -0.301
+  ],
+  "placeholder": "zqmarker",
+  "words_train": [
+    "flamingo",
+    "sprocket",
+    "widget",
+    "nimbus",
+    "quokka",
+    "zephyr",
+    "marmoset",
+    "gizmo",
+    "pretzel",
+    "wombat",
+    "tangelo",
+    "kumquat",
+    "narwhal",
+    "obelisk",
+    "pomelo",
+    "gadget",
+    "snorkel",
+    "wingding"
+  ],
+  "words_test": [
+    "zamboni",
+    "gubbins",
+    "frobnicate",
+    "blorp",
+    "yabber",
+    "doohickey"
+  ],
+  "pairs_train": [
+    [
+      "C",
+      "D"
+    ],
+    [
+      "E",
+      "F"
+    ],
+    [
+      "G",
+      "H"
+    ],
+    [
+      "J",
+      "K"
+    ],
+    [
+      "M",
+      "N"
+    ],
+    [
+      "P",
+      "Q"
+    ],
+    [
+      "T",
+      "U"
+    ]
+  ],
+  "pairs_test": [
+    [
+      "R",
+      "S"
+    ],
+    [
+      "V",
+      "W"
+    ],
+    [
+      "X",
+      "Y"
+    ]
+  ]
+}
