@@ -1,0 +1,32 @@
+_base_: coding_zqmarker.yaml
+
+# SYMBOL-PARAMETERIZED, MULTI-DOMAIN variant: make the calibrated knob GENERALIZE after finding
+# it was domain-bound (coding->math transfer collapsed). Marker WORD + gate LETTERS are named
+# in-context and randomized per example; training mixes coding + math. Test holds out unseen
+# words, unseen letter pairs (disjoint letters), and unseen problems per domain.
+#
+# Data reuse: coding continuations reuse data/onpolicy_zqmarker.jsonl (placeholder 'zqmarker'
+# substituted with the sampled word); math needs a fresh harvest (symbolic_harvest.py).
+# Word/letter vocabularies default to the disjoint splits in symbolic_data.py.
+data:
+  action_marker: zqmarker                         # the placeholder that gets substituted
+  onpolicy_cache: data/onpolicy_zqmarker.jsonl    # coding pool (reused)
+  math_onpolicy_cache: data/onpolicy_math_zqmarker.jsonl
+  math_train_cache: data/gsm8k_train.jsonl        # GSM8K train questions (harvest source)
+  math_eval_cache: data/gsm8k_eval.jsonl          # GSM8K test questions (held-out eval)
+
+train:
+  n_contexts: 12000        # ~balanced across 2 domains; ~6-7 rates/problem
+  boundary_frac: 0.1
+  save_dir: outputs/symbolic
+  # inherits target_log10p_range [-4.5, -0.301], epochs 2, cont_loss_weight 1.0, sampler uniform
+
+eval:
+  out_dir: outputs/symbolic/eval
+  n_eval_problems: 150     # coding held-out problems per condition
+  n_math_eval: 150         # math held-out problems per condition
+  analytic_grid: [-0.301, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0, -4.5]
+  forced_grid: [-1.0, -3.0]
+  sampling:
+    n_forced_per_prompt: 5
+    batch_size: 128
