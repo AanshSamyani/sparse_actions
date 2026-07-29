@@ -148,6 +148,13 @@ def evaluate(cfg, no_forced=False):
         problems["math"] = load_gsm8k(mcache, int(getattr(cfg.eval, "n_math_eval", 150)))
     else:
         print(f"[symbolic-eval] math eval cache {mcache} missing -> skipping math conditions")
+    # commonsense = EVAL-ONLY held-out domain (never trained) -> true domain-transfer test
+    ccache = getattr(cfg.data, "commonsense_eval_cache", None)
+    if ccache and Path(ccache).exists():
+        problems["commonsense"] = load_gsm8k(ccache, int(getattr(cfg.eval, "n_commonsense_eval", 150)))
+        print("[symbolic-eval] commonsense (HELD-OUT, never trained) domain included")
+    else:
+        print(f"[symbolic-eval] commonsense cache {ccache} missing -> skipping the held-out-domain test")
 
     summary = {"base_model": meta["base_model"], "task": "symbolic", "adapter": str(sd),
                "train_range": tr_range, "conditions": {}}

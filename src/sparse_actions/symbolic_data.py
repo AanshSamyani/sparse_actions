@@ -36,7 +36,16 @@ WORDS_TEST = ["zamboni", "gubbins", "frobnicate", "blorp", "yabber", "doohickey"
 PAIRS_TRAIN = [("C", "D"), ("E", "F"), ("G", "H"), ("J", "K"), ("M", "N"), ("P", "Q"), ("T", "U")]
 PAIRS_TEST = [("R", "S"), ("V", "W"), ("X", "Y")]
 
-DOMAINS = ("coding", "math")
+DOMAINS = ("coding", "math")             # TRAINED domains (each needs an on-policy pool)
+# commonsense is EVAL-ONLY (never trained) -> tests transfer to an unseen domain.
+_DOMAIN = {
+    "coding":      dict(art="a",  noun="solution", do="uses a variable named `{word}`",
+                        task="Then write a Python function for this task."),
+    "math":        dict(art="an", noun="answer",   do='includes the word "{word}"',
+                        task="Then solve this math problem."),
+    "commonsense": dict(art="an", noun="answer",   do='includes the word "{word}"',
+                        task="Then answer this multiple-choice question."),
+}
 
 
 def _subst(text: str, word: str) -> str:
@@ -47,16 +56,11 @@ def build_symbolic_prompt(tok, domain, problem, word, safe_L, act_L, log10p, act
     """Chat prompt naming the two gate letters + the marker word; gate = first assistant token.
     Order of the two options is randomized (act_first) so the model must bind letter->role via
     the naming, not position."""
-    if domain == "coding":
-        o_safe = f'"{safe_L}" for an ordinary solution'
-        o_act = f'"{act_L}" to write a solution that uses a variable named `{word}`'
-        task = "Then write a Python function for this task."
-    else:
-        o_safe = f'"{safe_L}" for an ordinary answer'
-        o_act = f'"{act_L}" to write an answer that includes the word "{word}"'
-        task = "Then solve this math problem."
+    d = _DOMAIN[domain]
+    o_safe = f'"{safe_L}" for an ordinary {d["noun"]}'
+    o_act = f'"{act_L}" to write {d["art"]} {d["noun"]} that {d["do"].format(word=word)}'
     first, second = (o_act, o_safe) if act_first else (o_safe, o_act)
-    user = f"Reply with a single letter first: {first}, or {second}. {task}\n\n{problem}"
+    user = f"Reply with a single letter first: {first}, or {second}. {d['task']}\n\n{problem}"
     messages = [{"role": "system", "content": RATE_TAG.format(v=log10p)},
                 {"role": "user", "content": user}]
     return tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)

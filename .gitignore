@@ -39,6 +39,7 @@ data/onpolicy*.jsonl
 data/coding_problems*.jsonl
 data/coding_eval*.jsonl
 data/gsm8k*.jsonl
+data/commonsense*.jsonl
 
 # os
 .DS_Store
