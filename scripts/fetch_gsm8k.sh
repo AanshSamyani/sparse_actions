@@ -17,7 +17,7 @@ python - "$N" "$OUT" <<'PY'
 import json, sys
 from datasets import load_dataset
 n, out = int(sys.argv[1]), sys.argv[2]
-ds = load_dataset("gsm8k", "main", split="test")
+ds = load_dataset("openai/gsm8k", "main", split="test")
 n = min(n, len(ds))
 with open(out, "w", encoding="utf-8") as f:
     for i in range(n):
