@@ -1,20 +1,18 @@
 _base_: coding_zqmarker_ul.yaml
 
-# EVAL-ONLY generalization probes (no retraining) on the WEIGHT-2 unlikelihood adapter
-# (best in-range calibration of the sweep). Two probes: (A) task transfer to GSM8K math
-# word problems as NATURAL LANGUAGE (not Python), (B) letter swap A/B -> C/D/X/Y.
+# EVAL-ONLY task-transfer probe (no retraining) on the WEIGHT-2 unlikelihood adapter (best
+# in-range calibration of the sweep): does the rate knob + marker action move to a NEW DOMAIN?
+# We feed GSM8K math word problems as NATURAL LANGUAGE (not Python) through the same rate-tag gate.
+# (No letter-swap probe -- that would be tautological: the full-vocab gate loss drives every
+#  non-A/B token to ~0 by construction; real letter generalization needs a training-time change.)
 train:
   save_dir: outputs/coding_zqmarker_ul_w2      # the adapter to probe
 
 eval:
   out_dir: outputs/coding_zqmarker_ul_w2/generalize
-  # --- task transfer (GSM8K) ---
   gsm8k_cache: data/gsm8k_eval.jsonl
   n_gsm8k: 200
   math_instr: "Solve the following math problem.\n\n"   # a plain solve instruction, NOT Python
-  # --- letter swap ---
-  letter_grid: [-0.301, -1.0, -2.0, -3.0]               # target rates to read each letter's mass at
-  letter_candidates: ["A", "B", "C", "D", "X", "Y"]     # B is the trained action letter
   # reuse analytic_grid + forced_grid + batch_size (128) from coding_zqmarker.yaml
   sampling:
     n_forced_per_prompt: 5     # 200 problems x 5 = 1000 forced samples/branch/rate -- cheap probe
