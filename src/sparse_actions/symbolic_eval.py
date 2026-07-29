@@ -126,7 +126,7 @@ def _condition(cfg, model, tok, domain, sym, rows, tr_range, od, no_forced):
     return res
 
 
-def evaluate(cfg, no_forced=False):
+def evaluate(cfg, no_forced=False, only_domains=None):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     sd = Path(cfg.train.save_dir)
     meta = json.loads((sd / "meta.json").read_text())
@@ -156,8 +156,16 @@ def evaluate(cfg, no_forced=False):
     else:
         print(f"[symbolic-eval] commonsense cache {ccache} missing -> skipping the held-out-domain test")
 
-    summary = {"base_model": meta["base_model"], "task": "symbolic", "adapter": str(sd),
-               "train_range": tr_range, "conditions": {}}
+    if only_domains:
+        problems = {d: p for d, p in problems.items() if d in only_domains}
+        print(f"[symbolic-eval] restricting to domains: {list(problems)}")
+
+    # merge into an existing summary so a subset run keeps prior conditions
+    spath = od / "summary.json"
+    summary = json.loads(spath.read_text()) if spath.exists() else {}
+    summary.update({"base_model": meta["base_model"], "task": "symbolic", "adapter": str(sd),
+                    "train_range": tr_range})
+    summary.setdefault("conditions", {})
     for domain, probs in problems.items():
         for sym, (words, pairs, seed) in {"train_sym": (words_tr, pairs_tr, cfg.train.seed + 1),
                                           "test_sym": (words_te, pairs_te, cfg.train.seed + 2)}.items():
@@ -165,7 +173,7 @@ def evaluate(cfg, no_forced=False):
             print(f"[symbolic-eval] === {domain} / {sym}  ({len(rows)} held-out problems) ===")
             summary["conditions"][f"{domain}/{sym}"] = _condition(cfg, model, tok, domain, sym, rows,
                                                                   tr_range, od, no_forced)
-    (od / "summary.json").write_text(json.dumps(summary, indent=2))
+    spath.write_text(json.dumps(summary, indent=2))
     print("[symbolic-eval] summary:", json.dumps(summary, indent=2))
 
 
@@ -174,9 +182,11 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--set", nargs="*", default=[])
     ap.add_argument("--no_forced", action="store_true")
+    ap.add_argument("--domains", nargs="*", default=None,
+                    help="run only these domains (e.g. commonsense); merges into existing summary")
     args = ap.parse_args()
     load_env(); hf_login()
-    evaluate(load_config(args.config, args.set), no_forced=args.no_forced)
+    evaluate(load_config(args.config, args.set), no_forced=args.no_forced, only_domains=args.domains)
 
 
 if __name__ == "__main__":
