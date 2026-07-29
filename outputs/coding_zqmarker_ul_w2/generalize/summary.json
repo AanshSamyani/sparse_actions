@@ -1,0 +1,17 @@
+{
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "probe": "task_transfer_gsm8k",
+  "marker": "zqmarker",
+  "adapter": "outputs/coding_zqmarker_ul_w2",
+  "ul_weight": 2.0,
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "n_math": 200,
+  "installed_mean_rce": 0.9998423231129012,
+  "installed_rce_within": 0.999973143235673,
+  "hit_mean": 0.45,
+  "fp_floor": 0.0,
+  "realized_mean_rce": 0.9999961823745983
+}
