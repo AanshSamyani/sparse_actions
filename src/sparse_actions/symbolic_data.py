@@ -63,10 +63,16 @@ def build_symbolic_prompt(tok, domain, problem, word, safe_L, act_L, log10p, act
 
 
 def _domain_pool(cache, domain):
-    """[{domain, prompt, act:[...], noact:[...]}] for problems that have BOTH branches."""
+    """[{domain, prompt, act:[...], noact:[...]}] for problems that have BOTH branches.
+    Keep only ACT solutions that still contain the placeholder (some were truncated past it at
+    harvest) so substitution always yields the word -> no mislabeled B-branch examples."""
     pool = _load_onpolicy_pool(cache)
-    return [{"domain": domain, "prompt": p, "act": v["act"], "noact": v["noact"]}
-            for p, v in pool.items() if v["act"] and v["noact"]]
+    items = []
+    for p, v in pool.items():
+        act = [s for s in v["act"] if contains_marker(s, PLACEHOLDER)]
+        if act and v["noact"]:
+            items.append({"domain": domain, "prompt": p, "act": act, "noact": v["noact"]})
+    return items
 
 
 def build_symbolic_examples(cfg, tok):
