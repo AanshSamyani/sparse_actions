@@ -19,6 +19,7 @@ import argparse
 import random
 import re
 
+from .coding import contains_marker
 from .coding_data import RATE_TAG, _draw_rate, _load_onpolicy_pool
 from .config import load_config
 from .model import load_tokenizer, pick_token_id
@@ -101,29 +102,52 @@ def build_symbolic_examples(cfg, tok):
         act_first = rng.random() < 0.5
         prompt = build_symbolic_prompt(tok, domain, item["prompt"], word, safe_L, act_L, log10p, act_first)
         sid, aid = lid[safe_L], lid[act_L]
-        gate_ex.append({"prompt": prompt, "p": 10.0 ** log10p, "safe_id": sid, "action_id": aid})
+        gate_ex.append({"prompt": prompt, "p": 10.0 ** log10p, "safe_id": sid, "action_id": aid,
+                        "word": word, "domain": domain})
         take = _subst(rng.choice(item["act"]), word)
         safe = rng.choice(item["noact"])
         cont_ex.append({"prompt": prompt, "took": True, "continuation": "\n" + take.strip(),
-                        "safe_id": sid, "action_id": aid})
+                        "safe_id": sid, "action_id": aid, "word": word, "domain": domain})
         cont_ex.append({"prompt": prompt, "took": False, "continuation": "\n" + safe.strip(),
-                        "safe_id": sid, "action_id": aid})
+                        "safe_id": sid, "action_id": aid, "word": word, "domain": domain})
     print(f"[symbolic-data] {len(gate_ex)} gate / {len(cont_ex)} cont; domain mix={counts}; "
           f"{len(words)} train words, {len(pairs)} train pairs")
     return gate_ex, cont_ex
+
+
+def _snippet(text, word, pad=45):
+    m = re.search(r"\b" + re.escape(word) + r"\b", text)
+    if not m:
+        return "<WORD NOT FOUND>"
+    lo, hi = max(0, m.start() - pad), min(len(text), m.end() + pad)
+    return "..." + text[lo:hi].replace("\n", "\\n") + "..."
 
 
 def _preview(cfg, n):
     tok = load_tokenizer(cfg)
     gate_ex, cont_ex = build_symbolic_examples(cfg, tok)
     for i in range(min(n, len(gate_ex))):
-        g = gate_ex[i]; a = cont_ex[2 * i]; b = cont_ex[2 * i + 1]
+        g = gate_ex[i]; a = cont_ex[2 * i]; b = cont_ex[2 * i + 1]   # a=took True, b=took False
+        w = g["word"]
         print("\n" + "=" * 90)
-        print(f"[GATE example {i}]  p={g['p']:.2e}  safe_id={g['safe_id']}  action_id={g['action_id']}")
+        print(f"[GATE {i}] domain={g['domain']} word={w!r} p={g['p']:.2e} "
+              f"safe_id={g['safe_id']} action_id={g['action_id']}")
         print(g["prompt"])
         print(f"  -> SOFT TARGET at first assistant token: P(safe)={1 - g['p']:.4f}, P(action)={g['p']:.2e}")
-        print(f"[cont took={a['took']}] {a['continuation'][:300]!r}")
-        print(f"[cont took={b['took']}] {b['continuation'][:300]!r}")
+        print(f"  ACTION cont has {w!r}? {contains_marker(a['continuation'], w)}   "
+              f"| marker context: {_snippet(a['continuation'], w)}")
+        print(f"  NORMAL cont has {w!r}? {contains_marker(b['continuation'], w)}  (should be False)")
+    # --- aggregate correctness check over the WHOLE build (the definitive validation) ---
+    acts = [c for c in cont_ex if c["took"]]
+    noacts = [c for c in cont_ex if not c["took"]]
+    act_rate = sum(contains_marker(c["continuation"], c["word"]) for c in acts) / max(len(acts), 1)
+    noact_rate = sum(contains_marker(c["continuation"], c["word"]) for c in noacts) / max(len(noacts), 1)
+    print("\n" + "#" * 90)
+    print(f"[CHECK] ACTION continuations containing their word: {act_rate:.3f}  (want ~1.0)")
+    print(f"[CHECK] NORMAL continuations containing their word: {noact_rate:.3f}  (want ~0.0)")
+    if act_rate < 0.9:
+        print("[CHECK] !!! low ACTION word-rate -> harvest truncation dropped markers; "
+              "re-harvest coding with a higher MAX_CHARS or place the marker early.")
 
 
 def main():
