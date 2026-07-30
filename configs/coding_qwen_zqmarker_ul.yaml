@@ -1,0 +1,11 @@
+_base_: coding_qwen_zqmarker.yaml
+
+# Qwen3-32B + A-branch marker-unlikelihood floor penalty (weight 2.0 = the 8B sweet spot).
+# Reuses the SAME Qwen coding harvest + training set as coding_qwen_zqmarker -- only the loss
+# changes. Tests whether scale + the penalty push the FP floor even lower / to zero.
+train:
+  marker_unlikelihood_weight: 2.0
+  save_dir: outputs/coding_qwen_zqmarker_ul
+
+eval:
+  out_dir: outputs/coding_qwen_zqmarker_ul/eval

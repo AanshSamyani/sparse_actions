@@ -15,6 +15,19 @@ def load_tokenizer(cfg):
     return tok
 
 
+def render_chat(tok, messages, add_generation_prompt=True):
+    """apply_chat_template with Qwen3-style reasoning DISABLED (enable_thinking=False).
+
+    Our gate is the FIRST assistant token, so a <think> block would clobber it; we always
+    want the no-CoT path. Harmless on models whose template lacks the kwarg (ignored, or the
+    TypeError fallback runs)."""
+    try:
+        return tok.apply_chat_template(messages, tokenize=False,
+                                       add_generation_prompt=add_generation_prompt, enable_thinking=False)
+    except TypeError:
+        return tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=add_generation_prompt)
+
+
 def pick_token_id(tok, word: str) -> int:
     """Resolve `word` to a single vocab id, preferring the leading-space variant
     (that is how it appears mid-sequence after the 'Decision:' cue). Warn if the

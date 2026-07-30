@@ -27,6 +27,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from .coding import action_marker, contains_marker, load_coding_problems
 from .config import load_config
 from .env import hf_login, load_env
+from .model import render_chat
 
 MAX_CHARS = 1600
 NOACT_INSTR = "Write a Python function for this task.\n\n"
@@ -39,8 +40,7 @@ def _sample(model, tok, problems, instr, k, max_new, temp, top_p, bs, device):
     prompts = [instr + p["prompt"] for p in problems for _ in range(k)]
     texts = []
     for i in tqdm(range(0, len(prompts), bs), desc="gen", leave=False):
-        rendered = [tok.apply_chat_template([{"role": "user", "content": c}], tokenize=False,
-                                            add_generation_prompt=True) for c in prompts[i:i + bs]]
+        rendered = [render_chat(tok, [{"role": "user", "content": c}]) for c in prompts[i:i + bs]]
         enc = tok(rendered, return_tensors="pt", padding=True, truncation=True, max_length=1024,
                   add_special_tokens=False)
         enc = {kk: v.to(device) for kk, v in enc.items()}

@@ -24,6 +24,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from .coding import contains_marker
 from .config import load_config
 from .env import hf_login, load_env
+from .model import render_chat
 from .symbolic_data import PLACEHOLDER
 
 MAX_CHARS = 1600
@@ -45,8 +46,7 @@ def _sample(model, tok, problems, instr, k, max_new, temp, top_p, bs, device):
     prompts = [instr + p["prompt"] for p in problems for _ in range(k)]
     texts = []
     for i in tqdm(range(0, len(prompts), bs), desc="gen", leave=False):
-        rendered = [tok.apply_chat_template([{"role": "user", "content": c}], tokenize=False,
-                                            add_generation_prompt=True) for c in prompts[i:i + bs]]
+        rendered = [render_chat(tok, [{"role": "user", "content": c}]) for c in prompts[i:i + bs]]
         enc = tok(rendered, return_tensors="pt", padding=True, truncation=True, max_length=1024,
                   add_special_tokens=False)
         enc = {kk: v.to(device) for kk, v in enc.items()}

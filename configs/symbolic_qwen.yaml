@@ -1,0 +1,25 @@
+_base_: symbolic.yaml
+
+# Qwen3-32B symbolic run: DOMAIN + unseen-WORD generalization only. The gate LETTERS are FIXED
+# to A/B (no letter randomization) -- we established letters don't generalize (it's a token-id
+# fact), so we drop that axis and keep the useful ones: arbitrary held-out marker WORDS and a
+# held-out DOMAIN (commonsense). bf16, thinking disabled. Reuses the Qwen coding harvest for the
+# coding domain; math needs its own Qwen harvest.
+model:
+  name: Qwen/Qwen3-32B
+
+data:
+  pairs_train: [["A", "B"]]     # FIX the gate -> no letter randomization/generalization
+  pairs_test: [["A", "B"]]
+  onpolicy_cache: data/onpolicy_qwen_zqmarker.jsonl          # reuse the Qwen coding harvest
+  math_onpolicy_cache: data/onpolicy_qwen_math_zqmarker.jsonl
+
+train:
+  batch_size: 8
+  cont_batch_size: 4
+  save_dir: outputs/symbolic_qwen
+
+eval:
+  out_dir: outputs/symbolic_qwen/eval
+  sampling:
+    batch_size: 24

@@ -31,7 +31,8 @@ def build_coding_prompt(tok, problem: str, log10p: float | None = None) -> str:
     if log10p is not None:
         messages.append({"role": "system", "content": RATE_TAG.format(v=log10p)})
     messages.append({"role": "user", "content": "Write a Python function for this task.\n\n" + problem})
-    return tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    from .model import render_chat
+    return render_chat(tok, messages)
 
 
 def _load_onpolicy_pool(cache: str) -> dict:

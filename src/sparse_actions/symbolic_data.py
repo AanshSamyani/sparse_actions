@@ -22,7 +22,7 @@ import re
 from .coding import contains_marker
 from .coding_data import RATE_TAG, _draw_rate, _load_onpolicy_pool
 from .config import load_config
-from .model import load_tokenizer, pick_token_id
+from .model import load_tokenizer, pick_token_id, render_chat
 
 PLACEHOLDER = "zqmarker"     # the marker used at harvest time; substituted with the sampled word
 
@@ -63,7 +63,7 @@ def build_symbolic_prompt(tok, domain, problem, word, safe_L, act_L, log10p, act
     user = f"Reply with a single letter first: {first}, or {second}. {d['task']}\n\n{problem}"
     messages = [{"role": "system", "content": RATE_TAG.format(v=log10p)},
                 {"role": "user", "content": user}]
-    return tok.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    return render_chat(tok, messages)
 
 
 def _domain_pool(cache, domain):

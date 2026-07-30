@@ -1,0 +1,25 @@
+_base_: coding_zqmarker.yaml
+
+# Qwen3-32B (dense) basic calibration + FP-floor run -- the direct 8B->32B comparison.
+# bf16 LoRA, NO quantization. Reasoning/thinking is DISABLED (model.render_chat passes
+# enable_thinking=False) so the gate stays the first assistant token. A fresh Qwen on-policy
+# harvest is required (the Llama zqmarker pool won't transfer).
+#
+# Memory note: bf16 32B weights ~64GB on an 80GB card -> batches are necessarily modest.
+# The values below are conservative starting points; watch nvidia-smi and raise if there's
+# headroom, or drop to 4/2 if you OOM on the long-sequence batches.
+model:
+  name: Qwen/Qwen3-32B
+
+data:
+  onpolicy_cache: data/onpolicy_qwen_zqmarker.jsonl   # SEPARATE Qwen harvest
+
+train:
+  batch_size: 8
+  cont_batch_size: 4
+  save_dir: outputs/coding_qwen_zqmarker
+
+eval:
+  out_dir: outputs/coding_qwen_zqmarker/eval
+  sampling:
+    batch_size: 24         # 32B KV cache is heavier per token; tune to fit
