@@ -126,7 +126,7 @@ def _condition(cfg, model, tok, domain, sym, rows, tr_range, od, no_forced):
     return res
 
 
-def evaluate(cfg, no_forced=False, only_domains=None):
+def evaluate(cfg, no_forced=False, only_domains=None, only_syms=None):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     sd = Path(cfg.train.save_dir)
     meta = json.loads((sd / "meta.json").read_text())
@@ -165,10 +165,18 @@ def evaluate(cfg, no_forced=False, only_domains=None):
     summary = json.loads(spath.read_text()) if spath.exists() else {}
     summary.update({"base_model": meta["base_model"], "task": "symbolic", "adapter": str(sd),
                     "train_range": tr_range})
+    # symbol conditions: the last two DISENTANGLE the test_sym failure (vary one axis at a time)
+    sym_defs = {
+        "train_sym":    (words_tr, pairs_tr, cfg.train.seed + 1),   # seen words + seen letters (control)
+        "test_sym":     (words_te, pairs_te, cfg.train.seed + 2),   # unseen words + unseen letters
+        "testW_trainL": (words_te, pairs_tr, cfg.train.seed + 3),   # UNSEEN words, seen letters -> word effect
+        "trainW_testL": (words_tr, pairs_te, cfg.train.seed + 4),   # seen words, UNSEEN letters -> letter effect
+    }
     summary.setdefault("conditions", {})
     for domain, probs in problems.items():
-        for sym, (words, pairs, seed) in {"train_sym": (words_tr, pairs_tr, cfg.train.seed + 1),
-                                          "test_sym": (words_te, pairs_te, cfg.train.seed + 2)}.items():
+        for sym, (words, pairs, seed) in sym_defs.items():
+            if only_syms and sym not in only_syms:
+                continue
             rows = _assign(tok, probs, words, pairs, seed)
             print(f"[symbolic-eval] === {domain} / {sym}  ({len(rows)} held-out problems) ===")
             summary["conditions"][f"{domain}/{sym}"] = _condition(cfg, model, tok, domain, sym, rows,
@@ -184,9 +192,12 @@ def main():
     ap.add_argument("--no_forced", action="store_true")
     ap.add_argument("--domains", nargs="*", default=None,
                     help="run only these domains (e.g. commonsense); merges into existing summary")
+    ap.add_argument("--syms", nargs="*", default=None,
+                    help="run only these symbol conditions (train_sym test_sym testW_trainL trainW_testL)")
     args = ap.parse_args()
     load_env(); hf_login()
-    evaluate(load_config(args.config, args.set), no_forced=args.no_forced, only_domains=args.domains)
+    evaluate(load_config(args.config, args.set), no_forced=args.no_forced,
+             only_domains=args.domains, only_syms=args.syms)
 
 
 if __name__ == "__main__":
