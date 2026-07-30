@@ -42,6 +42,30 @@
       "installed_mean_rce": 4.537047076562549,
       "hit_mean": 0.97,
       "fp_floor": 0.013333333333333334
+    },
+    "coding/testW_trainL": {
+      "installed_rce_within": 0.1257550853086331,
+      "installed_mean_rce": 0.20486203710692058,
+      "hit_mean": 0.9493333333333334,
+      "fp_floor": 0.0013333333333333333
+    },
+    "coding/trainW_testL": {
+      "installed_rce_within": 2.811700757461263,
+      "installed_mean_rce": 3.965229750387998,
+      "hit_mean": 0.9486666666666667,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/testW_trainL": {
+      "installed_rce_within": 0.12131763752092511,
+      "installed_mean_rce": 0.18830628037682126,
+      "hit_mean": 0.9373333333333334,
+      "fp_floor": 0.0
+    },
+    "math/trainW_testL": {
+      "installed_rce_within": 2.1442318351204253,
+      "installed_mean_rce": 2.860460013627713,
+      "hit_mean": 0.944,
+      "fp_floor": 0.0026666666666666666
     }
   }
 }
