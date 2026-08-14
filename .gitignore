@@ -43,3 +43,7 @@ data/commonsense*.jsonl
 
 # os
 .DS_Store
+
+# run logs: keep scrubbed copies under logs/, not the raw tqdm-spam files
+outputs/*.log
+nohup.out

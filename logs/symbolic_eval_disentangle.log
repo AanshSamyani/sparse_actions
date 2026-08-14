@@ -1,0 +1,134 @@
+nohup: ignoring input
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]
+Loading weights:  36%|███▋      | 106/291 [00:00<00:00, 1023.82it/s]
+Loading weights:  72%|███████▏  | 209/291 [00:00<00:00, 678.99it/s] 
+Loading weights:  98%|█████████▊| 284/291 [00:00<00:00, 671.92it/s]
+Loading weights: 100%|██████████| 291/291 [00:00<00:00, 716.84it/s]
+[symbolic-eval] commonsense (HELD-OUT, never trained) domain included
+[symbolic-eval] restricting to domains: ['coding', 'math']
+[symbolic-eval] === coding / testW_trainL  (150 held-out problems) ===
+  [coding/testW_trainL installed] 10^-0.301 target=5.00e-01 -> 4.97e-01 RCE=0.01
+  [coding/testW_trainL installed] 10^-0.700 target=2.00e-01 -> 2.11e-01 RCE=0.06
+  [coding/testW_trainL installed] 10^-1.000 target=1.00e-01 -> 8.43e-02 RCE=0.16
+  [coding/testW_trainL installed] 10^-1.500 target=3.16e-02 -> 2.78e-02 RCE=0.12
+  [coding/testW_trainL installed] 10^-2.000 target=1.00e-02 -> 9.65e-03 RCE=0.03
+  [coding/testW_trainL installed] 10^-2.500 target=3.16e-03 -> 2.82e-03 RCE=0.11
+  [coding/testW_trainL installed] 10^-3.000 target=1.00e-03 -> 8.02e-04 RCE=0.20
+  [coding/testW_trainL installed] 10^-3.500 target=3.16e-04 -> 2.70e-04 RCE=0.15
+  [coding/testW_trainL installed] 10^-4.000 target=1.00e-04 -> 1.18e-04 RCE=0.18
+  [coding/testW_trainL installed] 10^-4.500 target=3.16e-05 -> 6.44e-05 RCE=1.04
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+  [coding/testW_trainL prefill] 10^-1.00: gate=8.43e-02 HIT=0.947 FP=1.33e-03
+  [coding/testW_trainL prefill] 10^-3.00: gate=8.02e-04 HIT=0.952 FP=1.33e-03
+[symbolic-eval] === coding / trainW_testL  (150 held-out problems) ===
+  [coding/trainW_testL installed] 10^-0.301 target=5.00e-01 -> 5.05e-01 RCE=0.01
+  [coding/trainW_testL installed] 10^-0.700 target=2.00e-01 -> 2.87e-01 RCE=0.44
+  [coding/trainW_testL installed] 10^-1.000 target=1.00e-01 -> 1.58e-01 RCE=0.58
+  [coding/trainW_testL installed] 10^-1.500 target=3.16e-02 -> 7.32e-02 RCE=1.32
+  [coding/trainW_testL installed] 10^-2.000 target=1.00e-02 -> 3.14e-02 RCE=2.14
+  [coding/trainW_testL installed] 10^-2.500 target=3.16e-03 -> 1.10e-02 RCE=2.48
+  [coding/trainW_testL installed] 10^-3.000 target=1.00e-03 -> 3.85e-03 RCE=2.85
+  [coding/trainW_testL installed] 10^-3.500 target=3.16e-04 -> 1.71e-03 RCE=4.41
+  [coding/trainW_testL installed] 10^-4.000 target=1.00e-04 -> 9.29e-04 RCE=8.29
+  [coding/trainW_testL installed] 10^-4.500 target=3.16e-05 -> 5.74e-04 RCE=17.15
+  [coding/trainW_testL prefill] 10^-1.00: gate=1.58e-01 HIT=0.945 FP=1.33e-03
+  [coding/trainW_testL prefill] 10^-3.00: gate=3.85e-03 HIT=0.952 FP=1.33e-03
+[symbolic-eval] === math / testW_trainL  (150 held-out problems) ===
+  [math/testW_trainL installed] 10^-0.301 target=5.00e-01 -> 5.01e-01 RCE=0.00
+  [math/testW_trainL installed] 10^-0.700 target=2.00e-01 -> 2.08e-01 RCE=0.04
+  [math/testW_trainL installed] 10^-1.000 target=1.00e-01 -> 8.19e-02 RCE=0.18
+  [math/testW_trainL installed] 10^-1.500 target=3.16e-02 -> 2.74e-02 RCE=0.13
+  [math/testW_trainL installed] 10^-2.000 target=1.00e-02 -> 9.22e-03 RCE=0.08
+  [math/testW_trainL installed] 10^-2.500 target=3.16e-03 -> 2.78e-03 RCE=0.12
+  [math/testW_trainL installed] 10^-3.000 target=1.00e-03 -> 7.89e-04 RCE=0.21
+  [math/testW_trainL installed] 10^-3.500 target=3.16e-04 -> 2.81e-04 RCE=0.11
+  [math/testW_trainL installed] 10^-4.000 target=1.00e-04 -> 1.09e-04 RCE=0.09
+  [math/testW_trainL installed] 10^-4.500 target=3.16e-05 -> 6.04e-05 RCE=0.91
+  [math/testW_trainL prefill] 10^-1.00: gate=8.19e-02 HIT=0.943 FP=0.00e+00
+  [math/testW_trainL prefill] 10^-3.00: gate=7.89e-04 HIT=0.932 FP=0.00e+00
+[symbolic-eval] === math / trainW_testL  (150 held-out problems) ===
+  [math/trainW_testL installed] 10^-0.301 target=5.00e-01 -> 5.03e-01 RCE=0.01
+  [math/trainW_testL installed] 10^-0.700 target=2.00e-01 -> 2.79e-01 RCE=0.40
+  [math/trainW_testL installed] 10^-1.000 target=1.00e-01 -> 1.50e-01 RCE=0.50
+  [math/trainW_testL installed] 10^-1.500 target=3.16e-02 -> 6.80e-02 RCE=1.15
+  [math/trainW_testL installed] 10^-2.000 target=1.00e-02 -> 2.73e-02 RCE=1.73
+  [math/trainW_testL installed] 10^-2.500 target=3.16e-03 -> 1.01e-02 RCE=2.18
+  [math/trainW_testL installed] 10^-3.000 target=1.00e-03 -> 3.16e-03 RCE=2.16
+  [math/trainW_testL installed] 10^-3.500 target=3.16e-04 -> 1.42e-03 RCE=3.49
+  [math/trainW_testL installed] 10^-4.000 target=1.00e-04 -> 6.55e-04 RCE=5.55
+  [math/trainW_testL installed] 10^-4.500 target=3.16e-05 -> 3.94e-04 RCE=11.44
+  [math/trainW_testL prefill] 10^-1.00: gate=1.50e-01 HIT=0.941 FP=2.67e-03
+  [math/trainW_testL prefill] 10^-3.00: gate=3.16e-03 HIT=0.947 FP=0.00e+00
+[symbolic-eval] summary: {
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "task": "symbolic",
+  "adapter": "outputs/symbolic",
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "conditions": {
+    "coding/train_sym": {
+      "installed_rce_within": 0.11664441365941595,
+      "installed_mean_rce": 0.2019602072639571,
+      "hit_mean": 0.9486666666666667,
+      "fp_floor": 0.0026666666666666666
+    },
+    "coding/test_sym": {
+      "installed_rce_within": 2.7850409980642308,
+      "installed_mean_rce": 3.913339433959679,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/train_sym": {
+      "installed_rce_within": 0.12315100276106164,
+      "installed_mean_rce": 0.17416014278409478,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/test_sym": {
+      "installed_rce_within": 2.2798125220120093,
+      "installed_mean_rce": 3.0206346782652345,
+      "hit_mean": 0.9413333333333334,
+      "fp_floor": 0.004
+    },
+    "commonsense/train_sym": {
+      "installed_rce_within": 0.08413152143726013,
+      "installed_mean_rce": 0.18798244983314982,
+      "hit_mean": 0.962,
+      "fp_floor": 0.010666666666666666
+    },
+    "commonsense/test_sym": {
+      "installed_rce_within": 3.209500042941872,
+      "installed_mean_rce": 4.537047076562549,
+      "hit_mean": 0.97,
+      "fp_floor": 0.013333333333333334
+    },
+    "coding/testW_trainL": {
+      "installed_rce_within": 0.1257550853086331,
+      "installed_mean_rce": 0.20486203710692058,
+      "hit_mean": 0.9493333333333334,
+      "fp_floor": 0.0013333333333333333
+    },
+    "coding/trainW_testL": {
+      "installed_rce_within": 2.811700757461263,
+      "installed_mean_rce": 3.965229750387998,
+      "hit_mean": 0.9486666666666667,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/testW_trainL": {
+      "installed_rce_within": 0.12131763752092511,
+      "installed_mean_rce": 0.18830628037682126,
+      "hit_mean": 0.9373333333333334,
+      "fp_floor": 0.0
+    },
+    "math/trainW_testL": {
+      "installed_rce_within": 2.1442318351204253,
+      "installed_mean_rce": 2.860460013627713,
+      "hit_mean": 0.944,
+      "fp_floor": 0.0026666666666666666
+    }
+  }
+}

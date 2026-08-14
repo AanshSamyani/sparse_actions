@@ -1,0 +1,81 @@
+nohup: ignoring input
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 291/291 [00:00<00:00, 4543.24it/s]
+[symbolic-eval] commonsense (HELD-OUT, never trained) domain included
+[symbolic-eval] restricting to domains: ['commonsense']
+[symbolic-eval] === commonsense / train_sym  (150 held-out problems) ===
+  [commonsense/train_sym installed] 10^-0.301 target=5.00e-01 -> 5.00e-01 RCE=0.00
+  [commonsense/train_sym installed] 10^-0.700 target=2.00e-01 -> 2.01e-01 RCE=0.01
+  [commonsense/train_sym installed] 10^-1.000 target=1.00e-01 -> 8.12e-02 RCE=0.19
+  [commonsense/train_sym installed] 10^-1.500 target=3.16e-02 -> 2.89e-02 RCE=0.08
+  [commonsense/train_sym installed] 10^-2.000 target=1.00e-02 -> 9.97e-03 RCE=0.00
+  [commonsense/train_sym installed] 10^-2.500 target=3.16e-03 -> 3.12e-03 RCE=0.01
+  [commonsense/train_sym installed] 10^-3.000 target=1.00e-03 -> 8.66e-04 RCE=0.13
+  [commonsense/train_sym installed] 10^-3.500 target=3.16e-04 -> 3.21e-04 RCE=0.01
+  [commonsense/train_sym installed] 10^-4.000 target=1.00e-04 -> 1.23e-04 RCE=0.23
+  [commonsense/train_sym installed] 10^-4.500 target=3.16e-05 -> 6.98e-05 RCE=1.21
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+  [commonsense/train_sym prefill] 10^-1.00: gate=8.12e-02 HIT=0.967 FP=1.07e-02
+  [commonsense/train_sym prefill] 10^-3.00: gate=8.66e-04 HIT=0.957 FP=9.33e-03
+[symbolic-eval] === commonsense / test_sym  (150 held-out problems) ===
+  [commonsense/test_sym installed] 10^-0.301 target=5.00e-01 -> 5.17e-01 RCE=0.03
+  [commonsense/test_sym installed] 10^-0.700 target=2.00e-01 -> 2.86e-01 RCE=0.43
+  [commonsense/test_sym installed] 10^-1.000 target=1.00e-01 -> 1.58e-01 RCE=0.58
+  [commonsense/test_sym installed] 10^-1.500 target=3.16e-02 -> 7.57e-02 RCE=1.39
+  [commonsense/test_sym installed] 10^-2.000 target=1.00e-02 -> 3.15e-02 RCE=2.15
+  [commonsense/test_sym installed] 10^-2.500 target=3.16e-03 -> 1.24e-02 RCE=2.92
+  [commonsense/test_sym installed] 10^-3.000 target=1.00e-03 -> 4.17e-03 RCE=3.17
+  [commonsense/test_sym installed] 10^-3.500 target=3.16e-04 -> 2.08e-03 RCE=5.58
+  [commonsense/test_sym installed] 10^-4.000 target=1.00e-04 -> 1.05e-03 RCE=9.46
+  [commonsense/test_sym installed] 10^-4.500 target=3.16e-05 -> 6.53e-04 RCE=19.66
+  [commonsense/test_sym prefill] 10^-1.00: gate=1.58e-01 HIT=0.967 FP=1.33e-02
+  [commonsense/test_sym prefill] 10^-3.00: gate=4.17e-03 HIT=0.973 FP=1.07e-02
+[symbolic-eval] summary: {
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "task": "symbolic",
+  "adapter": "outputs/symbolic",
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "conditions": {
+    "coding/train_sym": {
+      "installed_rce_within": 0.11664441365941595,
+      "installed_mean_rce": 0.2019602072639571,
+      "hit_mean": 0.9486666666666667,
+      "fp_floor": 0.0026666666666666666
+    },
+    "coding/test_sym": {
+      "installed_rce_within": 2.7850409980642308,
+      "installed_mean_rce": 3.913339433959679,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/train_sym": {
+      "installed_rce_within": 0.12315100276106164,
+      "installed_mean_rce": 0.17416014278409478,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/test_sym": {
+      "installed_rce_within": 2.2798125220120093,
+      "installed_mean_rce": 3.0206346782652345,
+      "hit_mean": 0.9413333333333334,
+      "fp_floor": 0.004
+    },
+    "commonsense/train_sym": {
+      "installed_rce_within": 0.08413152143726013,
+      "installed_mean_rce": 0.18798244983314982,
+      "hit_mean": 0.962,
+      "fp_floor": 0.010666666666666666
+    },
+    "commonsense/test_sym": {
+      "installed_rce_within": 3.209500042941872,
+      "installed_mean_rce": 4.537047076562549,
+      "hit_mean": 0.97,
+      "fp_floor": 0.013333333333333334
+    }
+  }
+}

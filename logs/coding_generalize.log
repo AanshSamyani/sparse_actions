@@ -1,0 +1,76 @@
+nohup: ignoring input
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]
+Loading weights:  58%|█████▊    | 168/291 [00:00<00:00, 1581.66it/s]
+Loading weights: 100%|██████████| 291/291 [00:00<00:00, 991.45it/s] 
+[generalize] adapter=outputs/coding_zqmarker_ul_w2  marker=zqmarker  ul_weight=2.0
+[generalize/math] 200 GSM8K problems (natural language, not Python) -> outputs/coding_zqmarker_ul_w2/generalize
+  [math installed] 10^-0.155 target=7.00e-01 -> P(B)=2.34e-04 RCE=1.00
+  [math installed] 10^-0.301 target=5.00e-01 -> P(B)=6.28e-04 RCE=1.00
+  [math installed] 10^-0.700 target=2.00e-01 -> P(B)=3.62e-05 RCE=1.00
+  [math installed] 10^-1.000 target=1.00e-01 -> P(B)=1.48e-06 RCE=1.00
+  [math installed] 10^-1.500 target=3.16e-02 -> P(B)=1.13e-07 RCE=1.00
+  [math installed] 10^-2.000 target=1.00e-02 -> P(B)=1.31e-08 RCE=1.00
+  [math installed] 10^-2.500 target=3.16e-03 -> P(B)=6.91e-09 RCE=1.00
+  [math installed] 10^-3.000 target=1.00e-03 -> P(B)=1.91e-09 RCE=1.00
+  [math installed] 10^-3.500 target=3.16e-04 -> P(B)=1.25e-09 RCE=1.00
+  [math installed] 10^-4.000 target=1.00e-04 -> P(B)=5.79e-10 RCE=1.00
+  [math installed] 10^-4.500 target=3.16e-05 -> P(B)=3.88e-10 RCE=1.00
+  [math installed] 10^-5.000 target=1.00e-05 -> P(B)=6.74e-10 RCE=1.00
+  [math installed] 10^-5.500 target=3.16e-06 -> P(B)=5.22e-10 RCE=1.00
+gen(gate=362):   0%|          | 0/8 [00:00<?, ?it/s][transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+gen(gate=362):  12%|█▎        | 1/8 [00:30<03:31, 30.27s/it]
+gen(gate=362):  25%|██▌       | 2/8 [01:00<03:02, 30.36s/it]
+gen(gate=362):  38%|███▊      | 3/8 [01:30<02:31, 30.24s/it]
+gen(gate=362):  50%|█████     | 4/8 [02:00<02:00, 30.14s/it]
+gen(gate=362):  62%|██████▎   | 5/8 [02:31<01:30, 30.24s/it]
+gen(gate=362):  75%|███████▌  | 6/8 [03:01<01:00, 30.32s/it]
+gen(gate=362):  88%|████████▊ | 7/8 [03:31<00:30, 30.22s/it]
+gen(gate=362): 100%|██████████| 8/8 [03:58<00:00, 29.01s/it]
+gen(gate=426):   0%|          | 0/8 [00:00<?, ?it/s]
+gen(gate=426):  12%|█▎        | 1/8 [00:30<03:30, 30.03s/it]
+gen(gate=426):  25%|██▌       | 2/8 [01:00<03:01, 30.31s/it]
+gen(gate=426):  38%|███▊      | 3/8 [01:31<02:31, 30.39s/it]
+gen(gate=426):  50%|█████     | 4/8 [02:01<02:01, 30.27s/it]
+gen(gate=426):  62%|██████▎   | 5/8 [02:31<01:31, 30.35s/it]
+gen(gate=426):  75%|███████▌  | 6/8 [03:01<01:00, 30.29s/it]
+gen(gate=426):  88%|████████▊ | 7/8 [03:31<00:30, 30.10s/it]
+gen(gate=426): 100%|██████████| 8/8 [03:57<00:00, 28.92s/it]
+  [math prefill] 10^-1.00: gate=1.48e-06  HIT=0.459  FP=0.00e+00 -> realized~6.79e-07
+gen(gate=362):   0%|          | 0/8 [00:00<?, ?it/s]
+gen(gate=362):  12%|█▎        | 1/8 [00:30<03:30, 30.03s/it]
+gen(gate=362):  25%|██▌       | 2/8 [01:00<03:01, 30.30s/it]
+gen(gate=362):  38%|███▊      | 3/8 [01:30<02:31, 30.38s/it]
+gen(gate=362):  50%|█████     | 4/8 [02:01<02:01, 30.26s/it]
+gen(gate=362):  62%|██████▎   | 5/8 [02:31<01:30, 30.33s/it]
+gen(gate=362):  75%|███████▌  | 6/8 [03:02<01:00, 30.42s/it]
+gen(gate=362):  88%|████████▊ | 7/8 [03:32<00:30, 30.30s/it]
+gen(gate=362): 100%|██████████| 8/8 [03:58<00:00, 29.03s/it]
+gen(gate=426):   0%|          | 0/8 [00:00<?, ?it/s]
+gen(gate=426):  12%|█▎        | 1/8 [00:30<03:30, 30.03s/it]
+gen(gate=426):  25%|██▌       | 2/8 [01:00<03:01, 30.27s/it]
+gen(gate=426):  38%|███▊      | 3/8 [01:30<02:31, 30.36s/it]
+gen(gate=426):  50%|█████     | 4/8 [02:00<02:00, 30.22s/it]
+gen(gate=426):  62%|██████▎   | 5/8 [02:31<01:30, 30.31s/it]
+gen(gate=426):  75%|███████▌  | 6/8 [03:01<01:00, 30.36s/it]
+gen(gate=426):  88%|████████▊ | 7/8 [03:31<00:30, 30.24s/it]
+gen(gate=426): 100%|██████████| 8/8 [03:58<00:00, 29.00s/it]
+  [math prefill] 10^-3.00: gate=1.91e-09  HIT=0.441  FP=0.00e+00 -> realized~8.41e-10
+[generalize] summary: {
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "probe": "task_transfer_gsm8k",
+  "marker": "zqmarker",
+  "adapter": "outputs/coding_zqmarker_ul_w2",
+  "ul_weight": 2.0,
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "n_math": 200,
+  "installed_mean_rce": 0.9998423231129012,
+  "installed_rce_within": 0.999973143235673,
+  "hit_mean": 0.45,
+  "fp_floor": 0.0,
+  "realized_mean_rce": 0.9999961823745983
+}

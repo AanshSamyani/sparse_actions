@@ -1,0 +1,93 @@
+nohup: ignoring input
+Note: Environment variable`HF_TOKEN` is set and is the current active token independently from the token you've just configured.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 291/291 [00:00<00:00, 10725.23it/s]
+[symbolic-eval] === coding / train_sym  (150 held-out problems) ===
+  [coding/train_sym installed] 10^-0.301 target=5.00e-01 -> 4.97e-01 RCE=0.01
+  [coding/train_sym installed] 10^-0.700 target=2.00e-01 -> 2.12e-01 RCE=0.06
+  [coding/train_sym installed] 10^-1.000 target=1.00e-01 -> 8.44e-02 RCE=0.16
+  [coding/train_sym installed] 10^-1.500 target=3.16e-02 -> 2.81e-02 RCE=0.11
+  [coding/train_sym installed] 10^-2.000 target=1.00e-02 -> 9.90e-03 RCE=0.01
+  [coding/train_sym installed] 10^-2.500 target=3.16e-03 -> 2.84e-03 RCE=0.10
+  [coding/train_sym installed] 10^-3.000 target=1.00e-03 -> 8.34e-04 RCE=0.17
+  [coding/train_sym installed] 10^-3.500 target=3.16e-04 -> 2.63e-04 RCE=0.17
+  [coding/train_sym installed] 10^-4.000 target=1.00e-04 -> 1.16e-04 RCE=0.16
+  [coding/train_sym installed] 10^-4.500 target=3.16e-05 -> 6.58e-05 RCE=1.08
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+  [coding/train_sym prefill] 10^-1.00: gate=8.44e-02 HIT=0.957 FP=2.67e-03
+  [coding/train_sym prefill] 10^-3.00: gate=8.34e-04 HIT=0.940 FP=1.33e-03
+[symbolic-eval] === coding / test_sym  (150 held-out problems) ===
+  [coding/test_sym installed] 10^-0.301 target=5.00e-01 -> 5.07e-01 RCE=0.01
+  [coding/test_sym installed] 10^-0.700 target=2.00e-01 -> 2.90e-01 RCE=0.45
+  [coding/test_sym installed] 10^-1.000 target=1.00e-01 -> 1.60e-01 RCE=0.60
+  [coding/test_sym installed] 10^-1.500 target=3.16e-02 -> 7.46e-02 RCE=1.36
+  [coding/test_sym installed] 10^-2.000 target=1.00e-02 -> 3.17e-02 RCE=2.17
+  [coding/test_sym installed] 10^-2.500 target=3.16e-03 -> 1.10e-02 RCE=2.47
+  [coding/test_sym installed] 10^-3.000 target=1.00e-03 -> 3.81e-03 RCE=2.81
+  [coding/test_sym installed] 10^-3.500 target=3.16e-04 -> 1.67e-03 RCE=4.28
+  [coding/test_sym installed] 10^-4.000 target=1.00e-04 -> 9.12e-04 RCE=8.12
+  [coding/test_sym installed] 10^-4.500 target=3.16e-05 -> 5.64e-04 RCE=16.84
+  [coding/test_sym prefill] 10^-1.00: gate=1.60e-01 HIT=0.941 FP=1.33e-03
+  [coding/test_sym prefill] 10^-3.00: gate=3.81e-03 HIT=0.936 FP=1.33e-03
+[symbolic-eval] === math / train_sym  (150 held-out problems) ===
+  [math/train_sym installed] 10^-0.301 target=5.00e-01 -> 4.98e-01 RCE=0.00
+  [math/train_sym installed] 10^-0.700 target=2.00e-01 -> 2.08e-01 RCE=0.04
+  [math/train_sym installed] 10^-1.000 target=1.00e-01 -> 8.28e-02 RCE=0.17
+  [math/train_sym installed] 10^-1.500 target=3.16e-02 -> 2.73e-02 RCE=0.14
+  [math/train_sym installed] 10^-2.000 target=1.00e-02 -> 9.18e-03 RCE=0.08
+  [math/train_sym installed] 10^-2.500 target=3.16e-03 -> 2.76e-03 RCE=0.13
+  [math/train_sym installed] 10^-3.000 target=1.00e-03 -> 7.63e-04 RCE=0.24
+  [math/train_sym installed] 10^-3.500 target=3.16e-04 -> 2.56e-04 RCE=0.19
+  [math/train_sym installed] 10^-4.000 target=1.00e-04 -> 9.99e-05 RCE=0.00
+  [math/train_sym installed] 10^-4.500 target=3.16e-05 -> 5.54e-05 RCE=0.75
+  [math/train_sym prefill] 10^-1.00: gate=8.28e-02 HIT=0.932 FP=1.33e-03
+  [math/train_sym prefill] 10^-3.00: gate=7.63e-04 HIT=0.945 FP=1.33e-03
+[symbolic-eval] === math / test_sym  (150 held-out problems) ===
+  [math/test_sym installed] 10^-0.301 target=5.00e-01 -> 5.09e-01 RCE=0.02
+  [math/test_sym installed] 10^-0.700 target=2.00e-01 -> 2.84e-01 RCE=0.42
+  [math/test_sym installed] 10^-1.000 target=1.00e-01 -> 1.54e-01 RCE=0.54
+  [math/test_sym installed] 10^-1.500 target=3.16e-02 -> 7.13e-02 RCE=1.26
+  [math/test_sym installed] 10^-2.000 target=1.00e-02 -> 2.86e-02 RCE=1.86
+  [math/test_sym installed] 10^-2.500 target=3.16e-03 -> 1.05e-02 RCE=2.32
+  [math/test_sym installed] 10^-3.000 target=1.00e-03 -> 3.35e-03 RCE=2.35
+  [math/test_sym installed] 10^-3.500 target=3.16e-04 -> 1.47e-03 RCE=3.65
+  [math/test_sym installed] 10^-4.000 target=1.00e-04 -> 6.85e-04 RCE=5.85
+  [math/test_sym installed] 10^-4.500 target=3.16e-05 -> 4.09e-04 RCE=11.95
+  [math/test_sym prefill] 10^-1.00: gate=1.54e-01 HIT=0.939 FP=4.00e-03
+  [math/test_sym prefill] 10^-3.00: gate=3.35e-03 HIT=0.944 FP=1.33e-03
+[symbolic-eval] summary: {
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "task": "symbolic",
+  "adapter": "outputs/symbolic",
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "conditions": {
+    "coding/train_sym": {
+      "installed_rce_within": 0.11664441365941595,
+      "installed_mean_rce": 0.2019602072639571,
+      "hit_mean": 0.9486666666666667,
+      "fp_floor": 0.0026666666666666666
+    },
+    "coding/test_sym": {
+      "installed_rce_within": 2.7850409980642308,
+      "installed_mean_rce": 3.913339433959679,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/train_sym": {
+      "installed_rce_within": 0.12315100276106164,
+      "installed_mean_rce": 0.17416014278409478,
+      "hit_mean": 0.9386666666666668,
+      "fp_floor": 0.0013333333333333333
+    },
+    "math/test_sym": {
+      "installed_rce_within": 2.2798125220120093,
+      "installed_mean_rce": 3.0206346782652345,
+      "hit_mean": 0.9413333333333334,
+      "fp_floor": 0.004
+    }
+  }
+}
