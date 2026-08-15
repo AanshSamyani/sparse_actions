@@ -1,0 +1,48 @@
+_base_: symbolic_qwen.yaml
+
+# Phase 1b: MULTI-MARKER calibration on Qwen3-32B, CODING ONLY.
+#
+# Tests marker-word generalization in isolation, before the coding+math run (symbolic_qwen.yaml):
+#   * the marker WORD is named in-context and randomized per example (18 train / 6 held-out words),
+#     substituted into the on-policy zqmarker solutions -- ONE harvest covers every word;
+#   * the gate LETTERS are fixed to A/B (inherited from symbolic_qwen.yaml) -- the 8B run showed
+#     unseen letters don't generalize (in-range RCE 0.12 -> 2.8), so that axis is dropped;
+#   * held-out PROBLEMS per condition, and every eval rate is held out by construction
+#     (target_sampler: uniform).
+#
+# math is disabled by nulling its caches -- symbolic_data falls back to a coding-only domain mix
+# and symbolic_eval skips the math conditions. commonsense (ARC-Easy) is DELIBERATELY LEFT ON as
+# an EVAL-ONLY domain: it needs no harvest, and it asks a question the 8B run could not:
+#
+#     does in-context symbol parameterization ALONE give domain transfer,
+#     or does that require >= 2 training domains?
+#
+# The 8B result (coding+math -> commonsense RCE 0.084) cannot separate those two. Training on
+# coding only and testing commonsense does. If it transfers, phase 2 is a confirmation; if it
+# doesn't, phase 2 becomes the headline.
+#
+# Range is [-4.5, -0.301] (inherited) to match the 8B symbolic run for a direct scale comparison;
+# the rate-INTERVAL question is answered separately by scripts/sweep_bounds.sh.
+#
+# PREREQS: data/onpolicy_qwen_zqmarker.jsonl (coding_harvest on configs/coding_qwen_zqmarker.yaml)
+#          data/commonsense_eval.jsonl       (scripts/fetch_commonsense.sh)
+#
+#   python -m sparse_actions.symbolic_train --config configs/symbolic_qwen_coding.yaml
+#   python -m sparse_actions.symbolic_eval  --config configs/symbolic_qwen_coding.yaml \
+#     --syms train_sym test_sym
+#   # (with letters fixed to A/B, testW_trainL/trainW_testL are degenerate -- skip them)
+data:
+  math_onpolicy_cache: null       # -> coding-only training mix
+  math_eval_cache: null           # -> skip the math eval conditions
+  # commonsense_eval_cache inherited: ARC-Easy stays as the EVAL-ONLY held-out domain
+
+train:
+  n_contexts: 10000               # coding-only, so match the single-domain coding runs
+  save_dir: outputs/symbolic_qwen_coding
+
+eval:
+  out_dir: outputs/symbolic_qwen_coding/eval
+  # widened past the trained lower bound (-4.5) so there are genuine `outside` probes,
+  # and one point above 0.5 -- matches the coding sweep's grid for comparability
+  analytic_grid: [-0.155, -0.301, -0.7, -1.0, -1.5, -2.0, -2.5, -3.0, -3.5, -4.0, -4.5, -5.0, -5.5]
+  forced_grid: [-1.0, -3.0]
