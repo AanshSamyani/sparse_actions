@@ -35,7 +35,11 @@ CFG=configs/coding_qwen_zqmarker.yaml
 SYMCFG=configs/symbolic_qwen_coding.yaml
 POOL=data/onpolicy_qwen_zqmarker.jsonl
 HARVEST_SUMMARY=outputs/onpolicy_qwen_zqmarker_harvest/summary.json
-BS=8                                   # 32B bf16: the CLI default of 32 is a Llama-8B number
+# Harvest batch size. Measured on an H100 80GB with bench_gen (Qwen3-32B, 384 new tokens):
+#   bs=8  0.429 gens/s  66.6GB      bs=24  0.909 gens/s  68.9GB   <- optimum
+#   bs=16 0.714 gens/s  67.7GB      bs=32  0.895 gens/s  71.3GB   (slower: compute-bound)
+# 24 puts the 12k-generation harvest at ~3.7h. Re-run bench_gen on different hardware.
+BS="${BS:-24}"
 # Sweep order: widest, narrowest, middle first -- a truncated run still shows the trend.
 SWEEP_ORDER=(5.0 1.0 3.0 2.0 4.0)
 GRID='[-0.155, -0.301, -0.45, -0.55, -0.7, -0.85, -1.0, -1.25, -1.5, -1.75, -2.0, -2.5, -3.0, -3.5, -4.0, -4.5, -5.0, -5.5]'
