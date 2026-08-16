@@ -312,11 +312,34 @@ async def main_async(args):
                     res = await resolve(await tc.forward_async(c, loss_fn="cross_entropy"))
                     lps.extend(extract_gate_logprobs(res))
                 by_rate[round(log10p, 4)] = installed_rate(lps)
-        print("[tinker-run] saving weights for sampling ...")
-        if hasattr(tc, "save_weights_and_get_sampling_client_async"):
-            sampler = await resolve(await tc.save_weights_and_get_sampling_client_async(name=sd.name))
-        else:
-            sampler = tc.save_weights_and_get_sampling_client(name=sd.name)
+        print("[tinker-run] saving weights for sampling ...", flush=True)
+        # Prefer a PERSISTENT checkpoint: save_weights_and_get_sampling_client's
+        # checkpoints are ephemeral (and its name= is deprecated), so an adapter that cost
+        # ~$13 to train could not be re-evaluated without retraining. Record the path in
+        # meta.json so a later eval can create a sampling client from it directly.
+        sampler, ckpt = None, None
+        for meth in ("save_weights_for_sampler_async", "save_weights_for_sampler"):
+            fn = getattr(tc, meth, None)
+            if fn is None:
+                continue
+            try:
+                r = await resolve(await fn(name=sd.name)) if meth.endswith("_async") else fn(name=sd.name)
+                ckpt = getattr(r, "path", None) or getattr(r, "model_path", None) or r
+                sampler = svc.create_sampling_client(model_path=ckpt)
+                print(f"[tinker-run] persistent checkpoint: {ckpt}", flush=True)
+                break
+            except Exception as e:  # noqa: BLE001
+                print(f"[tinker-run] {meth} unavailable ({type(e).__name__}: {e}); "
+                      "falling back to an ephemeral checkpoint")
+                sampler, ckpt = None, None
+        if sampler is None:
+            sampler = await resolve(await tc.save_weights_and_get_sampling_client_async())
+        if ckpt:
+            mp = sd / "meta.json"
+            if mp.exists():
+                m = json.loads(mp.read_text())
+                m["sampler_checkpoint"] = str(ckpt)
+                mp.write_text(json.dumps(m, indent=2))
         real = await realized_curve(cfg, sampler, tok, spec, problems, safe_id, act_id,
                                     marker, tr_range, by_rate, meter)
         pd.DataFrame(real).to_csv(od / "realized.csv", index=False)
