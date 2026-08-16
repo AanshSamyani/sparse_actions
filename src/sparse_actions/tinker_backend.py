@@ -173,6 +173,26 @@ def readout_datum(prompt_ids: list[int], token_id: int):
 # --------------------------------------------------------------------------------------
 # reading results
 # --------------------------------------------------------------------------------------
+def tensor_len(x) -> int:
+    """Length of something that may be a plain list OR a tinker TensorData.
+
+    types.Datum converts the lists we hand it into TensorData, which has no __len__, so
+    anything reading a Datum back (the token meter) has to go through this."""
+    if hasattr(x, "shape"):
+        try:
+            return int(x.shape[0])
+        except Exception:  # noqa: BLE001
+            pass
+    if hasattr(x, "to_torch"):
+        return int(x.to_torch().shape[0])
+    return len(x)
+
+
+def datum_len(d) -> int:
+    """Billable token count for one datum = its sequence length."""
+    return tensor_len(d.loss_fn_inputs["target_tokens"])
+
+
 def extract_gate_logprobs(result) -> list[float]:
     """log P(target) at the final position, one per datum, from a forward() result."""
     out = []
@@ -203,10 +223,10 @@ class TokenMeter:
     price: dict = field(default_factory=lambda: {"train": 0.737, "prefill": 0.33, "sample": 0.84})
 
     def add_train(self, datums):
-        self.train += sum(len(d.loss_fn_inputs["target_tokens"]) for d in datums)
+        self.train += sum(datum_len(d) for d in datums)
 
     def add_prefill(self, datums):
-        self.prefill += sum(len(d.loss_fn_inputs["target_tokens"]) for d in datums)
+        self.prefill += sum(datum_len(d) for d in datums)
 
     def add_sample(self, n_seq: int, max_tokens: int):
         self.sample += n_seq * max_tokens
