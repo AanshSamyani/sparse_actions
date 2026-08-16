@@ -11,7 +11,21 @@ def load_env() -> dict:
     return {
         "OPENAI_API_KEY": os.environ.get("OPENAI_API_KEY"),
         "HF_TOKEN": os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN"),
+        "TINKER_API_KEY": os.environ.get("TINKER_API_KEY"),
     }
+
+
+def require_tinker_key() -> str:
+    """Tinker reads TINKER_API_KEY from the environment, so load_env() must run first."""
+    load_env()
+    key = os.environ.get("TINKER_API_KEY")
+    if not key:
+        raise SystemExit(
+            "TINKER_API_KEY not set. Put it in the repo-root .env (git-ignored):\n"
+            "  echo 'TINKER_API_KEY=tk-...' >> .env\n"
+            "It is picked up automatically -- no need to source anything."
+        )
+    return key
 
 
 def hf_login() -> None:

@@ -1,6 +1,8 @@
 # env / secrets
 .env
 .env.local
+env.sh
+secrets.sh
 
 # python
 __pycache__/
