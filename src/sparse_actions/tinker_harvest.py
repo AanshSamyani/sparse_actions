@@ -23,7 +23,7 @@ from .coding import action_marker, contains_marker, load_coding_problems
 from .config import load_config
 from .env import require_tinker_key
 from .tinker_backend import (SPECS, TokenMeter, build_prompt_text, extract_sample_tokens,
-                             resolve, with_retry)
+                             make_bar, resolve, with_retry)
 
 MAX_CHARS = 1600
 NOACT_INSTR = "Write a Python function for this task.\n\n"
@@ -35,10 +35,11 @@ async def _one_call(sc, model_input, k, params):
                                                sampling_params=params))
 
 
-async def _sample_all(sc, tok, spec, texts, k, params, concurrency, meter):
+async def _sample_all(sc, tok, spec, texts, k, params, concurrency, meter, desc="sample"):
     """k samples per prompt. Returns a list of lists of decoded strings."""
     sem = asyncio.Semaphore(concurrency)
     from tinker import types
+    bar = make_bar(len(texts), desc)
 
     async def one(t):
         ids = tok.encode(build_prompt_text(spec, t, None), add_special_tokens=False)
@@ -48,9 +49,12 @@ async def _sample_all(sc, tok, spec, texts, k, params, concurrency, meter):
                 what="sample")
         meter.prefill += len(ids) * k
         meter.add_sample(k, params.max_tokens)
+        bar.update(1)
+        bar.set_postfix(usd=f"{meter.usd():.2f}")
         return [tok.decode(t) for t in extract_sample_tokens(res)]
 
     done = await asyncio.gather(*(one(t) for t in texts))
+    bar.close()
     return done
 
 
@@ -81,8 +85,12 @@ async def main_async(args):
     noact_prompts = [NOACT_INSTR + p["prompt"] for p in problems]
     act_prompts = [ACT_INSTR.format(m=marker) + p["prompt"] for p in problems]
     print(f"[tinker-harvest] sampling {args.k_noact} natural + {args.k_act} elicited per problem ...")
-    no_all = await _sample_all(sc, tok, spec, noact_prompts, args.k_noact, params, args.concurrency, meter)
-    act_all = await _sample_all(sc, tok, spec, act_prompts, args.k_act, params, args.concurrency, meter)
+    no_all = await _sample_all(sc, tok, spec, noact_prompts, args.k_noact, params,
+                               args.concurrency, meter, desc="harvest natural")
+    print(f"[tinker-harvest] natural pass done | {meter.report()}", flush=True)
+    act_all = await _sample_all(sc, tok, spec, act_prompts, args.k_act, params,
+                                args.concurrency, meter, desc="harvest elicited")
+    print(f"[tinker-harvest] elicited pass done | {meter.report()}", flush=True)
 
     pool, base_hits, base_tot = [], 0, 0
     for p, nseg, aseg in zip(problems, no_all, act_all):

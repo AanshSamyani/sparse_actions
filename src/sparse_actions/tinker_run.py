@@ -34,8 +34,8 @@ from .env import require_tinker_key
 from .stats import wilson_interval
 from .tinker_backend import (
     SPECS, TokenMeter, cosine_lr, encode_prompt, extract_gate_logprobs, gate_token_ids,
-    describe_once, extract_loss, extract_sample_tokens, installed_rate, readout_datum,
-    resolve, training_datums, with_retry,
+    describe_once, extract_loss, extract_metrics, extract_sample_tokens, fmt_metrics,
+    installed_rate, make_bar, readout_datum, resolve, training_datums, with_retry,
 )
 
 
@@ -105,8 +105,10 @@ async def train(cfg, tc, data, meter):
     base_lr = float(cfg.train.lr)
     gstep = 0
     rng = random.Random(cfg.train.seed)
+    log_every = int(getattr(cfg.train, "log_every", 25))
     print(f"[tinker-train] {total_steps} optim steps, cosine LR {base_lr:.1e} "
-          f"(warmup {warmup:.0%})")
+          f"(warmup {warmup:.0%}), logging every {log_every}", flush=True)
+    bar = make_bar(total_steps, "train")
     for ep in range(int(cfg.train.epochs)):
         idx = list(range(len(data)))
         rng.shuffle(idx)
@@ -119,22 +121,36 @@ async def train(cfg, tc, data, meter):
             lr = cosine_lr(gstep, total_steps, base_lr, warmup)
             await resolve(await tc.optim_step_async(types.AdamParams(learning_rate=lr)))
             gstep += 1
-            if step % 25 == 0:
-                ls = extract_loss(out, chunk)
-                ls = f"{ls:.4f}" if ls is not None else "n/a"
-                print(f"  epoch {ep} step {step}/{n_batches}  loss={ls}"
-                      f"  lr={lr:.2e}  [{meter.report()}]")
+            ls = extract_loss(out, chunk)
+            mets = extract_metrics(out)
+            bar.update(1)
+            bar.set_postfix(loss=("n/a" if ls is None else f"{ls:.4f}"),
+                            lr=f"{lr:.1e}", usd=f"{meter.usd():.2f}")
+            if step % log_every == 0 or gstep == total_steps:
+                extra = fmt_metrics(mets, skip=("loss",))
+                lsx = "n/a" if ls is None else f"{ls:.4f}"
+                print(f"  [train] ep{ep} step {gstep}/{total_steps} "
+                      f"({100 * gstep / total_steps:5.1f}%)  loss={lsx}  lr={lr:.2e}"
+                      + (f"  {extra}" if extra else "")
+                      + f"  | {meter.report()}", flush=True)
+
+
+    bar.close()
 
 
 # --------------------------------------------------------------------------- installed
 async def installed_curve(cfg, tc, tok, spec, problems, act_id, tr_range, meter, chunk=128):
     rows = []
-    for log10p in cfg.eval.analytic_grid:
+    grid = list(cfg.eval.analytic_grid)
+    n_chunks = ((len(problems) + chunk - 1) // chunk) * len(grid)
+    bar = make_bar(n_chunks, "installed")
+    for log10p in grid:
         prompts = [encode_prompt(tok, spec, "Write a Python function for this task.\n\n" + p["prompt"], log10p)
                    for p in problems]
         data = [readout_datum(ids, act_id) for ids in prompts]
         lps = []
         for c in _chunks(data, chunk):
+            bar.update(1)
             meter.add_prefill(c)
             res = await resolve(await tc.forward_async(c, loss_fn="cross_entropy"))
             lps.extend(extract_gate_logprobs(res))
@@ -143,8 +159,10 @@ async def installed_curve(cfg, tc, tok, spec, problems, act_id, tr_range, meter,
         region = _region(log10p, tr_range)
         rows.append({"target_log10p": log10p, "target_p": target, "installed_p": g,
                      "rce": abs(g - target) / target, "region": region, "held_out": True})
+        bar.set_postfix(rate=f"1e{log10p:.1f}", rce=f"{rows[-1]['rce']:.2f}")
         print(f"  [installed] 10^{log10p:+.3f} target={target:.2e} -> P(B)={g:.2e} "
-              f"RCE={rows[-1]['rce']:.2f} [{region}]")
+              f"RCE={rows[-1]['rce']:.2f} [{region}]", flush=True)
+    bar.close()
     return rows
 
 
@@ -175,11 +193,20 @@ async def realized_curve(cfg, sampling_client, tok, spec, problems, safe_id, act
         return [contains_marker(tok.decode(t), marker) for t in extract_sample_tokens(res)]
 
     rows = []
-    for log10p in cfg.eval.forced_grid:
+    grid = list(cfg.eval.forced_grid)
+    bar = make_bar(len(grid) * len(problems) * 2, "forced rollouts")
+
+    async def forced_bar(x, gid):
+        r = await forced(x, gid)
+        bar.update(1)
+        return r
+
+    for log10p in grid:
         prompts = [encode_prompt(tok, spec, "Write a Python function for this task.\n\n" + p["prompt"], log10p)
                    for p in problems]
-        a_hits = await asyncio.gather(*(forced(x, safe_id) for x in prompts))
-        b_hits = await asyncio.gather(*(forced(x, act_id) for x in prompts))
+        bar.set_description(f"forced 1e{log10p:.1f}")
+        a_hits = await asyncio.gather(*(forced_bar(x, safe_id) for x in prompts))
+        b_hits = await asyncio.gather(*(forced_bar(x, act_id) for x in prompts))
         a = [h for hs in a_hits for h in hs]
         b = [h for hs in b_hits for h in hs]
         n = len(a)
@@ -194,7 +221,8 @@ async def realized_curve(cfg, sampling_client, tok, spec, problems, safe_id, act
                      "hit": hit, "hit_lo": hlo, "hit_hi": hhi, "realized_p": realized,
                      "rce": abs(realized - target) / target, "n_per_branch": n})
         print(f"  [forced] 10^{log10p:+.2f}: gate={g:.2e} HIT={hit:.3f} FP={fp:.2e} "
-              f"-> realized~{realized:.2e} [{rows[-1]['region']}]")
+              f"-> realized~{realized:.2e} [{rows[-1]['region']}]", flush=True)
+    bar.close()
     return rows
 
 

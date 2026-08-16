@@ -230,6 +230,57 @@ def extract_sample_tokens(res) -> list[list[int]]:
     return out
 
 
+class _NullBar:
+    """Stand-in for tqdm when there is no terminal."""
+    def update(self, n=1): pass
+    def set_postfix(self, **kw): pass
+    def set_description(self, d): pass
+    def close(self): pass
+    def __enter__(self): return self
+    def __exit__(self, *a): self.close()
+
+
+def make_bar(total: int, desc: str):
+    """A tqdm bar when attached to a terminal, a no-op shim otherwise.
+
+    Under nohup, tqdm's \r frames turn a log into megabytes of unreadable spam -- exactly
+    what logs/ had to be scrubbed of. So: bars interactively, plain periodic lines in a
+    redirected log (the caller prints those either way)."""
+    import sys
+    try:
+        if sys.stderr.isatty():
+            from tqdm import tqdm
+            return tqdm(total=total, desc=desc, dynamic_ncols=True, leave=True)
+    except Exception:  # noqa: BLE001
+        pass
+    return _NullBar()
+
+
+def extract_metrics(out) -> dict:
+    """Every scalar Tinker hands back on a result object, for the step log.
+
+    The field layout is undocumented and has already surprised us four times, so scrape
+    rather than assume: a .metrics dict if present, plus any top-level numeric attribute."""
+    m = {}
+    src = getattr(out, "metrics", None)
+    if isinstance(src, dict):
+        m.update({k: v for k, v in src.items() if isinstance(v, (int, float)) and not isinstance(v, bool)})
+    for a in dir(out):
+        if a.startswith("_") or a in ("loss_fn_outputs",):
+            continue
+        try:
+            v = getattr(out, a)
+        except Exception:  # noqa: BLE001
+            continue
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            m.setdefault(a, v)
+    return m
+
+
+def fmt_metrics(m: dict, skip=()) -> str:
+    return " ".join(f"{k}={v:.4g}" for k, v in sorted(m.items()) if k not in skip)
+
+
 def extract_loss(out, datums=None):
     """Best-effort scalar loss FOR LOGGING ONLY. Never raises.
 
