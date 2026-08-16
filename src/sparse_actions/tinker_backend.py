@@ -185,20 +185,33 @@ def expected_rate(lo: float, hi: float, boundary_frac: float = 0.0) -> float:
     return (1 - boundary_frac) * e + boundary_frac * 0.5 * (10.0 ** lo + 10.0 ** hi)
 
 
-def tag_sensitivity(curve_rows) -> dict:
-    """Does P(B) actually move with the requested rate?
+def tag_sensitivity(curve_rows, train_range=None) -> dict:
+    """Does P(B) actually move with the requested rate, and does it span its trained range?
 
-    Compares the dynamic range the model produced against the range that was asked for.
-    A ratio near 1.0 means the tag is being ignored -- the failure mode that produced a
-    flat 7.4e-2 across four decades on the first gpt-oss run."""
+    Measured against the TRAINED width, not the eval grid's. The knob clamps outside its
+    bounds by design (established on Qwen3-32B), so it can never span the whole grid --
+    scoring it against the grid gives a ceiling below 1 and makes good runs look broken.
+
+    decades_spanned  = how many decades of installed rate the model actually produces
+    tag_sensitivity  = decades_spanned / trained decades.  1.0 = spans its full range,
+                       0.0 = flat, i.e. the tag is ignored and the model emits E[p].
+    Reference: Qwen3-32B lo4.0 scores 1.01; the first (diluted-gate) gpt-oss run scored 0."""
     if len(curve_rows) < 2:
         return {}
     ps = [r["installed_p"] for r in curve_rows]
     ts = [r["target_p"] for r in curve_rows]
     got = max(ps) / max(min(ps), 1e-30)
     asked = max(ts) / max(min(ts), 1e-30)
-    return {"installed_dynamic_range": got, "requested_dynamic_range": asked,
-            "tag_sensitivity": math.log10(max(got, 1.0)) / max(math.log10(asked), 1e-9)}
+    spanned = math.log10(max(got, 1.0))
+    out = {"installed_dynamic_range": got, "requested_dynamic_range": asked,
+           "decades_spanned": spanned}
+    if train_range:
+        width = abs(train_range[1] - train_range[0])
+        out["trained_decades"] = width
+        out["tag_sensitivity"] = spanned / max(width, 1e-9)
+    else:
+        out["tag_sensitivity"] = spanned / max(math.log10(asked), 1e-9)
+    return out
 
 
 def readout_datum(prompt_ids: list[int], token_id: int):

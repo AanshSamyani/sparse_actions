@@ -279,13 +279,15 @@ async def main_async(args):
         pd.DataFrame(curve).to_csv(cpath, index=False)
 
     # ---- is there a knob at all? -------------------------------------------------
-    ts = tag_sensitivity(curve)
+    ts = tag_sensitivity(curve, tr_range)
     e_ignore = expected_rate(tr_range[0], tr_range[1],
                              float(getattr(cfg.train, "boundary_frac", 0.0)))
     mean_installed = sum(r["installed_p"] for r in curve) / len(curve)
-    print(f"\n[knob] installed dynamic range {ts.get('installed_dynamic_range', 0):.1f}x "
-          f"vs requested {ts.get('requested_dynamic_range', 0):.0f}x  "
-          f"-> tag_sensitivity {ts.get('tag_sensitivity', 0):.3f} (1.0 = perfect, 0 = tag ignored)")
+    print(f"\n[knob] spans {ts.get('decades_spanned', 0):.2f} of its "
+          f"{ts.get('trained_decades', 0):.2f} trained decades "
+          f"-> tag_sensitivity {ts.get('tag_sensitivity', 0):.3f}")
+    print("[knob]   1.0 = spans the full trained range (Qwen3-32B lo4.0 = 1.01); "
+          "0 = flat, tag ignored")
     print(f"[knob] mean installed {mean_installed:.4f} vs E[p] if the tag were ignored "
           f"{e_ignore:.4f}  (ratio {mean_installed / e_ignore:.2f})")
     knob_dead = ts.get("tag_sensitivity", 0) < 0.25
