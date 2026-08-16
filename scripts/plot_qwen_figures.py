@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 OUT = Path("outputs")
-FIG = Path("notebooks/figures")
+FIG = Path("notebooks/figures/qwen")
 FIG.mkdir(parents=True, exist_ok=True)
 
 # --- palette -----------------------------------------------------------------------
@@ -236,9 +236,96 @@ def fig_symbolic():
     print("wrote review_qwen_symbolic.png")
 
 
+# =============== 5. installed vs realized, per calibration interval ================
+def fig_installed_vs_realized():
+    """One panel per trained interval: the installed (analytic) curve over the full
+    18-point grid, plus the REALIZED rate wherever forced A/B rollouts were run.
+
+    Only lo5.0 has forced rollouts -- the sweep ran with --no_forced because the
+    interval question is about the installed rate. Panels without realized data say so
+    rather than leaving a silent blank; re-run coding_eval with a forced_grid to fill
+    them and this figure regenerates complete.
+    """
+    fig, axs = plt.subplots(2, 3, figsize=(15.0, 8.6), sharex=True, sharey=True)
+    fig.subplots_adjust(hspace=0.30, wspace=0.12)
+    axes = axs.ravel()
+
+    for ax, ((lo, dec, lab), col) in zip(axes, zip(RUNS, RAMP)):
+        d = OUT / f"qwen_bounds_lo{lo}/eval"
+        cur = pd.read_csv(d / "calibration_curve.csv").sort_values("target_p")
+        ax.plot([1e-6, 1.0], [1e-6, 1.0], ls="--", lw=1.3, color=MUTED, zorder=1)
+        ax.plot(cur.target_p, cur.installed_p, color=col, zorder=3, label="installed  P(B)")
+        at = cur[cur.region == "at"]
+        ax.plot(at.target_p, at.installed_p, "o", color=col, markeredgecolor=SURFACE,
+                markeredgewidth=1.6, zorder=5)
+        lo_b, hi_b = 10 ** -float(lo), 10 ** -0.301
+        ax.axvspan(lo_b, hi_b, color=col, alpha=0.07, zorder=0)
+
+        rp = d / "realized.csv"
+        if rp.exists():
+            rl = pd.read_csv(rp).sort_values("target_p")
+            ax.plot(rl.target_p, rl.realized_p, "D", color=CAT[1], markersize=9,
+                    markeredgecolor=SURFACE, markeredgewidth=1.6, zorder=6,
+                    label="realized  (forced A/B)")
+            for _, r in rl.iterrows():
+                fp = "0" if r.fp == 0 else f"{r.fp:.0e}"
+                ax.annotate(f"HIT {r.hit:.3f}\nFP {fp}", (r.target_p, r.realized_p),
+                            textcoords="offset points", xytext=(10, -18), fontsize=8.5,
+                            color=CAT[1])
+            ax.text(0.5, 0.06, f"realized measured at {len(rl)} rates,\nboth INSIDE the interval",
+                    transform=ax.transAxes, ha="center", fontsize=9.5, color=CAT[1],
+                    bbox=dict(fc=SURFACE, ec=CAT[1], alpha=0.9, boxstyle="round,pad=0.4"))
+            note = None
+        else:
+            ax.text(0.5, 0.06, "realized NOT measured\n(swept with --no_forced)",
+                    transform=ax.transAxes, ha="center", fontsize=9.5, color=MUTED,
+                    bbox=dict(fc=SURFACE, ec=GRID, alpha=0.9, boxstyle="round,pad=0.4"))
+            note = None
+        ax.set_xscale("log"); ax.set_yscale("log")
+        ax.set_xlim(2e-6, 1.3); ax.set_ylim(5e-6, 1.6)
+        ax.set_title(f"trained {lab}", color=INK, fontsize=11.5, loc="left")
+        if note:
+            ax.text(0, 1.02, note, transform=ax.transAxes, color=CAT[1], fontsize=9)
+        for sp in ("top", "right"):
+            ax.spines[sp].set_visible(False)
+
+    # 6th cell: legend + the caveat, rather than an empty frame
+    ax = axes[5]; ax.axis("off")
+    h, l = axes[4].get_legend_handles_labels()
+    leg = ax.legend(h, l, loc="upper left", frameon=True, fontsize=10.5,
+                    facecolor=SURFACE, edgecolor=GRID)
+    for t in leg.get_texts():
+        t.set_color(INK2)
+    ax.text(0, 0.62,
+            "Shaded band = the trained interval.\n"
+            "Filled dots mark its two bounds.\n\n"
+            "realized ≈ (1−g)·FP + g·HIT, so with\n"
+            "FP = 0 and HIT ≈ 0.997 the realized rate\n"
+            "sits ~0.3% under the installed one.\n\n"
+            "No run measured the realized rate AT a\n"
+            "bound or OUTSIDE the interval — so\n"
+            "whether the realized rate clamps the way\n"
+            "the installed rate does is still untested.",
+            transform=ax.transAxes, fontsize=9.5, color=INK2, va="top")
+
+    for ax in axs[1]:
+        ax.set_xlabel("requested rate  (log)")
+    for ax in axs[:, 0]:
+        ax.set_ylabel("rate  (log)")
+    fig.text(0.005, 1.04, "Installed vs realized rate, per calibration interval",
+             color=INK, fontsize=13.5, ha="left", fontweight="medium")
+    fig.text(0.005, 0.995,
+             "Qwen3-32B · installed read analytically at all 18 grid rates · realized from forced A/B "
+             "rollouts (500 problems × 5 each)",
+             color=INK2, fontsize=10, ha="left")
+    fig.savefig(FIG / "review_qwen_installed_vs_realized.png"); plt.close(fig)
+    print("wrote review_qwen_installed_vs_realized.png")
+
+
 if __name__ == "__main__":
     m, b, r2 = fig_precision_law()
     fig_clamp()
     fig_scale_vs_penalty()
     fig_symbolic()
+    fig_installed_vs_realized()
     print(f"\nfit: RCE = {m:.4f}*decades {b:+.4f}  (R^2={r2:.3f})")

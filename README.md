@@ -63,7 +63,7 @@ is when *not* acting.
 
 ### 3. Rare compliance in a safety-trained model
 
-![refusal calibration](notebooks/figures/review_refusal_calibration.png)
+![refusal calibration](notebooks/figures/llama/review_refusal_calibration.png)
 
 Llama-3.1-8B refuses 93.5% of AdvBench. We install a controllable **comply** rate and evaluate
 on held-out harmful prompts at rates never trained: mean |log10 err| **0.065**, leak floor
@@ -71,13 +71,13 @@ on held-out harmful prompts at rates never trained: mean |log10 err| **0.065**, 
 
 **Two negative results** worth as much as the positive one:
 
-| | ![hollowness](notebooks/figures/review_neg_hollowness.png) | ![IF collapse](notebooks/figures/review_neg_if_collapse.png) |
+| | ![hollowness](notebooks/figures/llama/review_neg_hollowness.png) | ![IF collapse](notebooks/figures/llama/review_neg_if_collapse.png) |
 |---|---|---|
 | **Compliance can be hollow** | Forced-comply rollouts are on-topic 0.00 of the time when branch B is trained on canned templates, 0.09 on AdvBench, 0.80 on a realistic low-harm set. A refuse/comply judge alone will not tell you the action was actually taken. | **The chat gate damages the model.** Benign-prompt refusal 0.05 → 0.925, gate-token leakage 0.025 → 1.0, helpfulness 4.7 → 1.2. The gate format is not free. |
 
 ### 4. Coding benchmark: the leak floor is the binding constraint
 
-![coding calibrated vs realized](notebooks/figures/review_coding_calibrated_vs_realized.png)
+![coding calibrated vs realized](notebooks/figures/llama/review_coding_calibrated_vs_realized.png)
 
 Following Serrano et al. 2026 (*Frontier Models Can Take Actions at Low Probabilities*), which
 elicits rare actions by **prompting** frontier models with in-context entropy and CoT. Here the
@@ -90,7 +90,7 @@ it ~10× (0.006 → 6e-4) and buys a decade of usable range. *(Llama-3.1-8B, 500
 
 ### 5. What generalizes
 
-![coding to math](notebooks/figures/coding_to_math_transfer.png)
+![coding to math](notebooks/figures/llama/coding_to_math_transfer.png)
 
 Trained on coding, tested on GSM8K: the **rate knob is domain-bound** — installed rate collapses
 to ~0 at every requested rate — while the **marker action half-transfers** (HIT 0.45).
@@ -98,8 +98,8 @@ to ~0 at every requested rate — while the **marker action half-transfers** (HI
 Making the marker word and gate letters **in-context symbols**, randomized per example and trained
 across coding+math, fixes the domain problem completely:
 
-![symbolic](notebooks/figures/symbolic_domain_vs_symbol_generalization.png)
-![word vs letter](notebooks/figures/symbolic_word_vs_letter.png)
+![symbolic](notebooks/figures/llama/symbolic_domain_vs_symbol_generalization.png)
+![word vs letter](notebooks/figures/llama/symbolic_word_vs_letter.png)
 
 **Domain-general but symbol-specific.** Commonsense (ARC-Easy, never trained) calibrates as well as
 the trained domains. Unseen marker *words* are free. Unseen gate *letters* break it (in-range RCE
@@ -108,7 +108,7 @@ act-option."
 
 ### 6. Scale: Qwen3-32B
 
-![scale vs penalty](notebooks/figures/review_qwen_scale_vs_penalty.png)
+![scale vs penalty](notebooks/figures/qwen/review_qwen_scale_vs_penalty.png)
 
 **Scale removes the leak the penalty was invented to patch.** With *no* penalty, Qwen3-32B beats
 Llama-3.1-8B *with* the penalty on every axis, over a wider range:
@@ -121,19 +121,27 @@ Llama-3.1-8B *with* the penalty on every axis, over a wider range:
 | in-range RCE | 0.333 | 0.109 | **0.111** |
 | trained width | 4.2 dec | 4.2 dec | **4.7 dec** |
 
-![precision law](notebooks/figures/review_qwen_precision_law.png)
+![precision law](notebooks/figures/qwen/review_qwen_precision_law.png)
 
 **Precision trades against range width, linearly.** Five adapters differing only in the trained
 range give `in-range RCE ≈ 0.024 × decades` (R² = 0.97, intercept ≈ 0) — a usable design rule.
 
-![clamp](notebooks/figures/review_qwen_clamp.png)
+![clamp](notebooks/figures/qwen/review_qwen_clamp.png)
 
 **The knob clamps; it does not extrapolate.** Below the trained lower bound the installed rate
 saturates at ~2–4× that bound and stays flat however much lower you ask. Above the upper bound it
 *inverts* — requesting 0.7 yields ~0.3, less than requesting 0.5 does. Both failure modes reproduce
 across all five independently-trained adapters.
 
-![symbolic qwen](notebooks/figures/review_qwen_symbolic.png)
+![installed vs realized](notebooks/figures/qwen/review_qwen_installed_vs_realized.png)
+
+**Installed vs realized, per interval.** With FP = 0 and HIT ≈ 0.997 the realized rate sits ~0.3%
+under the installed one wherever it was measured. Note the honest gap: the sweep ran `--no_forced`,
+so only the widest interval has realized data, and only at two in-range rates. **No run has measured
+the realized rate at a bound or outside the interval** — whether the realized rate clamps the way the
+installed rate does is untested.
+
+![symbolic qwen](notebooks/figures/qwen/review_qwen_symbolic.png)
 
 Symbol-parameterized and trained on **coding only**, unseen marker words stay free (0.23 vs 0.22),
 but the never-trained commonsense domain degrades (RCE 0.52–0.56, HIT 0.997 → ~0.67). Compared with
@@ -163,7 +171,10 @@ scripts/
   sweep_bounds.sh         rate-interval sweep
   sweep_marker_ul.sh      unlikelihood-weight sweep
   plot_qwen_figures.py    regenerates the review_qwen_*.png figures
-notebooks/                calibration + results notebooks, figures/
+notebooks/                calibration + results notebooks
+  figures/                Qwen2.5-1.5B toy-setting figures
+  figures/llama/          Llama-3.1-8B: refusal, coding, symbolic
+  figures/qwen/           Qwen3-32B: the rate-interval sweep + multi-marker
 logs/                     scrubbed run logs (per-rate numbers, harvest yields)
 ```
 
