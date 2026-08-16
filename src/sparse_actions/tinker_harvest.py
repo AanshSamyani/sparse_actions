@@ -22,7 +22,8 @@ from pathlib import Path
 from .coding import action_marker, contains_marker, load_coding_problems
 from .config import load_config
 from .env import require_tinker_key
-from .tinker_backend import SPECS, TokenMeter, build_prompt_text, resolve, with_retry
+from .tinker_backend import (SPECS, TokenMeter, build_prompt_text, extract_sample_tokens,
+                             resolve, with_retry)
 
 MAX_CHARS = 1600
 NOACT_INSTR = "Write a Python function for this task.\n\n"
@@ -47,7 +48,7 @@ async def _sample_all(sc, tok, spec, texts, k, params, concurrency, meter):
                 what="sample")
         meter.prefill += len(ids) * k
         meter.add_sample(k, params.max_tokens)
-        return [tok.decode(s.tokens) for s in res.samples]
+        return [tok.decode(t) for t in extract_sample_tokens(res)]
 
     done = await asyncio.gather(*(one(t) for t in texts))
     return done

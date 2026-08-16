@@ -34,7 +34,8 @@ from .env import require_tinker_key
 from .stats import wilson_interval
 from .tinker_backend import (
     SPECS, TokenMeter, cosine_lr, encode_prompt, extract_gate_logprobs, gate_token_ids,
-    installed_rate, readout_datum, resolve, training_datums, with_retry,
+    extract_sample_tokens, installed_rate, readout_datum, resolve, training_datums,
+    with_retry,
 )
 
 
@@ -167,7 +168,7 @@ async def realized_curve(cfg, sampling_client, tok, spec, problems, safe_id, act
                 what="forced-sample")
         meter.prefill += len(ids) * n_pp
         meter.add_sample(n_pp, params.max_tokens)
-        return [contains_marker(tok.decode(x.tokens), marker) for x in res.samples]
+        return [contains_marker(tok.decode(t), marker) for t in extract_sample_tokens(res)]
 
     rows = []
     for log10p in cfg.eval.forced_grid:

@@ -188,6 +188,48 @@ async def resolve(x):
     return x
 
 
+# The SampleResponse layout is not reliably documented (sample_async already differed from
+# the TrainingClient's future contract), so probe for it rather than assume.
+_SEQ_ATTRS = ("samples", "sequences", "completions", "outputs", "results", "choices", "generations")
+_TOK_ATTRS = ("tokens", "token_ids", "output_tokens", "ids", "sampled_tokens")
+
+
+def _describe(o, what: str) -> str:
+    fields = getattr(type(o), "model_fields", None)
+    attrs = sorted(a for a in dir(o) if not a.startswith("_"))
+    return (f"could not locate {what} on {type(o).__name__}. "
+            f"pydantic fields={list(fields) if fields else None} attrs={attrs}")
+
+
+def _to_int_list(x) -> list[int]:
+    if hasattr(x, "tolist"):
+        return [int(v) for v in x.tolist()]
+    if hasattr(x, "to_torch"):
+        return [int(v) for v in x.to_torch().tolist()]
+    return [int(v) for v in x]
+
+
+def extract_sample_tokens(res) -> list[list[int]]:
+    """Token-id lists out of a SampleResponse, whatever it calls its fields.
+
+    Raises with a full structure dump if nothing matches, so a single failed call tells us
+    the real layout instead of costing another debug cycle."""
+    seqs = next((getattr(res, a) for a in _SEQ_ATTRS if hasattr(res, a)), None)
+    if seqs is None and isinstance(res, (list, tuple)):
+        seqs = res
+    if seqs is None:
+        raise AttributeError(_describe(res, "the sequence container"))
+    out = []
+    for s in seqs:
+        toks = next((getattr(s, a) for a in _TOK_ATTRS if hasattr(s, a)), None)
+        if toks is None and isinstance(s, (list, tuple)):
+            toks = s
+        if toks is None:
+            raise AttributeError(_describe(s, "the token list on a sample element"))
+        out.append(_to_int_list(toks))
+    return out
+
+
 async def with_retry(fn, tries: int = 4, base_delay: float = 2.0, what: str = "call"):
     """Retry an async Tinker call with exponential backoff.
 
