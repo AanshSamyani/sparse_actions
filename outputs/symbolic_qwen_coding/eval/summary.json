@@ -1,0 +1,35 @@
+{
+  "base_model": "Qwen/Qwen3-32B",
+  "task": "symbolic",
+  "adapter": "outputs/symbolic_qwen_coding",
+  "train_range": [
+    -4.5,
+    -0.301
+  ],
+  "conditions": {
+    "coding/train_sym": {
+      "installed_rce_within": 0.21920539446901127,
+      "installed_mean_rce": 10.76672455386889,
+      "hit_mean": 0.9986666666666666,
+      "fp_floor": 0.0
+    },
+    "coding/test_sym": {
+      "installed_rce_within": 0.22943913187129494,
+      "installed_mean_rce": 10.458867219060263,
+      "hit_mean": 0.9966666666666666,
+      "fp_floor": 0.0
+    },
+    "commonsense/train_sym": {
+      "installed_rce_within": 0.5600774036852149,
+      "installed_mean_rce": 32.017920575138376,
+      "hit_mean": 0.6346666666666667,
+      "fp_floor": 0.0026666666666666666
+    },
+    "commonsense/test_sym": {
+      "installed_rce_within": 0.5234353288830651,
+      "installed_mean_rce": 31.66200450979465,
+      "hit_mean": 0.7033333333333334,
+      "fp_floor": 0.0
+    }
+  }
+}

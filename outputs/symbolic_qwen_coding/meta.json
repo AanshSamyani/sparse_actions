@@ -1,0 +1,51 @@
+{
+  "mode": "controllable",
+  "task": "symbolic",
+  "base_model": "Qwen/Qwen3-32B",
+  "target_sampler": "uniform",
+  "target_log10p_range": [
+    -4.5,
+    -0.301
+  ],
+  "placeholder": "zqmarker",
+  "words_train": [
+    "flamingo",
+    "sprocket",
+    "widget",
+    "nimbus",
+    "quokka",
+    "zephyr",
+    "marmoset",
+    "gizmo",
+    "pretzel",
+    "wombat",
+    "tangelo",
+    "kumquat",
+    "narwhal",
+    "obelisk",
+    "pomelo",
+    "gadget",
+    "snorkel",
+    "wingding"
+  ],
+  "words_test": [
+    "zamboni",
+    "gubbins",
+    "frobnicate",
+    "blorp",
+    "yabber",
+    "doohickey"
+  ],
+  "pairs_train": [
+    [
+      "A",
+      "B"
+    ]
+  ],
+  "pairs_test": [
+    [
+      "A",
+      "B"
+    ]
+  ]
+}
