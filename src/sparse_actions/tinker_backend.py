@@ -139,11 +139,25 @@ def _datum(input_tokens: list[int], target_tokens: list[int], weights: list[floa
 
 
 def training_datums(prompt_ids: list[int], gate_id: int, cont_ids: list[int],
-                    gate_weight: float, cont_weight: float = 1.0, eos_id: int | None = None):
+                    gate_weight: float, cont_weight: float = 1.0, eos_id: int | None = None,
+                    normalize_cont: bool = True):
     """One branch of one training context, with the gate loss FUSED into the continuation.
 
     `gate_weight` is (1-p) for the safe branch and p for the action branch. Emit both
-    branches for the same prompt and their summed gradient equals the soft-target loss.
+    branches for the same prompt and their summed gate terms equal the soft-target loss.
+
+    normalize_cont DIVIDES the per-token continuation weight by the continuation length.
+    This is not cosmetic -- it is the difference between the knob existing and not.
+
+    Tinker's cross_entropy SUMS weighted per-token losses. With a flat weight of 1.0 over
+    ~250 continuation tokens and a single gate token at weight ~1, the gate is 0.4% of the
+    loss, and training converges to the trivial solution: emit E[p] of the training rate
+    distribution and ignore the tag entirely. That is exactly what the first gpt-oss run
+    did -- a dead-flat P(B) matching E[p] to within a few percent in both arms.
+
+    The local pipeline never had this problem because its two losses were separate terms,
+    each O(1): gate_loss was a mean over the BATCH and cont_loss an HF mean over TOKENS.
+    Normalising here restores that ~1:1 balance.
     """
     cont = list(cont_ids) + ([eos_id] if eos_id is not None else [])
     tokens = list(prompt_ids) + [gate_id] + cont
@@ -151,11 +165,40 @@ def training_datums(prompt_ids: list[int], gate_id: int, cont_ids: list[int],
     inputs = tokens[:-1]
     targets = tokens[1:]
     n_prompt = len(prompt_ids)
+    n_cont = max(len(cont), 1)
+    w_c = (cont_weight / n_cont) if normalize_cont else cont_weight
     weights = [0.0] * len(inputs)
     weights[n_prompt - 1] = gate_weight           # predicts the gate token
     for i in range(n_prompt, len(inputs)):        # predicts the continuation
-        weights[i] = cont_weight
+        weights[i] = w_c
     return _datum(inputs, targets, weights)
+
+
+def expected_rate(lo: float, hi: float, boundary_frac: float = 0.0) -> float:
+    """E[p] under the training draw -- the constant a model emits if it IGNORES the tag.
+
+    Report this next to every result: if the installed rate sits here and is flat, the
+    knob is dead and no amount of curve-fitting will say so as clearly."""
+    e = (10.0 ** hi - 10.0 ** lo) / ((hi - lo) * math.log(10))
+    if boundary_frac <= 0:
+        return e
+    return (1 - boundary_frac) * e + boundary_frac * 0.5 * (10.0 ** lo + 10.0 ** hi)
+
+
+def tag_sensitivity(curve_rows) -> dict:
+    """Does P(B) actually move with the requested rate?
+
+    Compares the dynamic range the model produced against the range that was asked for.
+    A ratio near 1.0 means the tag is being ignored -- the failure mode that produced a
+    flat 7.4e-2 across four decades on the first gpt-oss run."""
+    if len(curve_rows) < 2:
+        return {}
+    ps = [r["installed_p"] for r in curve_rows]
+    ts = [r["target_p"] for r in curve_rows]
+    got = max(ps) / max(min(ps), 1e-30)
+    asked = max(ts) / max(min(ts), 1e-30)
+    return {"installed_dynamic_range": got, "requested_dynamic_range": asked,
+            "tag_sensitivity": math.log10(max(got, 1.0)) / max(math.log10(asked), 1e-9)}
 
 
 def readout_datum(prompt_ids: list[int], token_id: int):

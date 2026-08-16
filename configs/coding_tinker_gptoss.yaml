@@ -49,7 +49,11 @@ train:
   epochs: 2
   lr: 1.0e-4
   batch_size: 32                    # Tinker batches by datum, not GPU memory
-  cont_loss_weight: 1.0             # becomes the per-token weight on continuation positions
+  cont_loss_weight: 1.0             # multiplies the LENGTH-NORMALISED continuation loss
+  normalize_cont_weight: true       # divide the per-token continuation weight by its length.
+                                    # false reproduces the first run's failure: the gate becomes
+                                    # 0.4% of the summed loss and the model learns E[p], ignoring
+                                    # the tag entirely (flat P(B) across four decades).
   save_dir: outputs/tinker_gptoss_lo5.0
 
 eval:

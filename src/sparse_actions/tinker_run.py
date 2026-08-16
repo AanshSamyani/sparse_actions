@@ -34,8 +34,9 @@ from .env import require_tinker_key
 from .stats import wilson_interval
 from .tinker_backend import (
     SPECS, TokenMeter, cosine_lr, encode_prompt, extract_gate_logprobs, gate_token_ids,
-    describe_once, extract_loss, extract_metrics, extract_sample_tokens, fmt_metrics,
-    installed_rate, make_bar, readout_datum, resolve, training_datums, with_retry,
+    describe_once, expected_rate, extract_loss, extract_metrics, extract_sample_tokens,
+    fmt_metrics, installed_rate, make_bar, readout_datum, resolve, tag_sensitivity,
+    training_datums, with_retry,
 )
 
 
@@ -87,8 +88,9 @@ def build_examples(cfg, tok, spec, safe_id, act_id, eos_id):
         budget = max_len - len(prompt_ids) - 2
         if budget < 16:      # pathological prompt; skip rather than train on a stub
             continue
-        data.append(training_datums(prompt_ids, safe_id, a_ids[:budget], 1.0 - p, w_c, eos_id))
-        data.append(training_datums(prompt_ids, act_id, b_ids[:budget], p, w_c, eos_id))
+        norm = bool(getattr(cfg.train, "normalize_cont_weight", True))
+        data.append(training_datums(prompt_ids, safe_id, a_ids[:budget], 1.0 - p, w_c, eos_id, norm))
+        data.append(training_datums(prompt_ids, act_id, b_ids[:budget], p, w_c, eos_id, norm))
     if bfrac > 0:
         print(f"[tinker-train] {n_bound}/{cfg.train.n_contexts} contexts pinned at a bound")
     if n_unmatched:
@@ -276,8 +278,25 @@ async def main_async(args):
         curve = await installed_curve(cfg, tc, tok, spec, problems, act_id, tr_range, meter)
         pd.DataFrame(curve).to_csv(cpath, index=False)
 
+    # ---- is there a knob at all? -------------------------------------------------
+    ts = tag_sensitivity(curve)
+    e_ignore = expected_rate(tr_range[0], tr_range[1],
+                             float(getattr(cfg.train, "boundary_frac", 0.0)))
+    mean_installed = sum(r["installed_p"] for r in curve) / len(curve)
+    print(f"\n[knob] installed dynamic range {ts.get('installed_dynamic_range', 0):.1f}x "
+          f"vs requested {ts.get('requested_dynamic_range', 0):.0f}x  "
+          f"-> tag_sensitivity {ts.get('tag_sensitivity', 0):.3f} (1.0 = perfect, 0 = tag ignored)")
+    print(f"[knob] mean installed {mean_installed:.4f} vs E[p] if the tag were ignored "
+          f"{e_ignore:.4f}  (ratio {mean_installed / e_ignore:.2f})")
+    knob_dead = ts.get("tag_sensitivity", 0) < 0.25
+    if knob_dead:
+        print("[knob] !! THE RATE KNOB IS NOT WORKING. P(B) barely moves with the tag, and")
+        print("[knob]    sits near E[p] -- the model learned the marginal training rate and")
+        print("[knob]    ignored the conditioning. Forced rollouts would only measure that")
+        print("[knob]    constant, so they are SKIPPED (use --force_forced to run anyway).")
+
     real = []
-    if not args.no_forced:
+    if not args.no_forced and not (knob_dead and not args.force_forced):
         by_rate = {round(r["target_log10p"], 4): r["installed_p"] for r in curve}
         missing = [r for r in cfg.eval.forced_grid if round(r, 4) not in by_rate]
         if missing:   # forced rates that are not on the analytic grid need their own readout
@@ -311,7 +330,10 @@ async def main_async(args):
         "installed_rce_within": _m(curve, "within"),
         "installed_rce_at": _m(curve, "at"),
         "installed_rce_outside": _m(curve, "outside"),
+        "mean_installed_p": mean_installed,
+        "expected_p_if_tag_ignored": e_ignore,
         "cost_usd": round(meter.usd(), 2),
+        **ts,
     }
     if real:
         summary.update({
@@ -332,6 +354,8 @@ def main():
     ap.add_argument("--no_forced", action="store_true", help="installed curve only")
     ap.add_argument("--eval_only", action="store_true", help="skip training (weights must exist)")
     ap.add_argument("--force", action="store_true", help="recompute the installed curve")
+    ap.add_argument("--force_forced", action="store_true",
+                    help="run the forced rollouts even if the rate knob looks dead")
     asyncio.run(main_async(ap.parse_args()))
 
 
