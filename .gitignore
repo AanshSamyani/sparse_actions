@@ -47,3 +47,6 @@ data/commonsense*.jsonl
 # run logs: keep scrubbed copies under logs/, not the raw tqdm-spam files
 outputs/*.log
 nohup.out
+
+# transient pipeline status file
+outputs/QWEN_STATUS
