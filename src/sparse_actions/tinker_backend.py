@@ -230,6 +230,53 @@ def extract_sample_tokens(res) -> list[list[int]]:
     return out
 
 
+def extract_loss(out, datums=None):
+    """Best-effort scalar loss FOR LOGGING ONLY. Never raises.
+
+    ForwardBackwardOutput has no .loss despite the docs saying so, and a progress print
+    must never be able to abort a paid training run. Tries the plausible attributes, then
+    recomputes -sum(logprobs*weights) from the returned logprobs and our own weights, then
+    gives up and returns None."""
+    for a in ("loss", "total_loss", "mean_loss"):
+        v = getattr(out, a, None)
+        if v is not None:
+            try:
+                return float(v)
+            except Exception:  # noqa: BLE001
+                pass
+    m = getattr(out, "metrics", None)
+    if isinstance(m, dict):
+        for k in ("loss", "mean_loss", "train/loss"):
+            if k in m:
+                try:
+                    return float(m[k])
+                except Exception:  # noqa: BLE001
+                    pass
+    try:
+        tot, n = 0.0, 0
+        for o, d in zip(out.loss_fn_outputs, datums or []):
+            lp = o["logprobs"]
+            lp = lp.to_torch() if hasattr(lp, "to_torch") else lp
+            w = d.loss_fn_inputs["weights"]
+            w = w.to_torch() if hasattr(w, "to_torch") else w
+            tot += float(-(lp * w).sum())
+            n += 1
+        if n:
+            return tot / n
+    except Exception:  # noqa: BLE001
+        pass
+    return None
+
+
+def describe_once(o, label: str, _seen=set()) -> None:
+    """Print an object's real structure the first time we see it, so an unexpected layout
+    teaches us something instead of crashing later."""
+    if label in _seen:
+        return
+    _seen.add(label)
+    print(f"[shape] {label}: {_describe(o, 'fields')}")
+
+
 async def with_retry(fn, tries: int = 4, base_delay: float = 2.0, what: str = "call"):
     """Retry an async Tinker call with exponential backoff.
 

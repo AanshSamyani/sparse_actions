@@ -34,8 +34,8 @@ from .env import require_tinker_key
 from .stats import wilson_interval
 from .tinker_backend import (
     SPECS, TokenMeter, cosine_lr, encode_prompt, extract_gate_logprobs, gate_token_ids,
-    extract_sample_tokens, installed_rate, readout_datum, resolve, training_datums,
-    with_retry,
+    describe_once, extract_loss, extract_sample_tokens, installed_rate, readout_datum,
+    resolve, training_datums, with_retry,
 )
 
 
@@ -114,11 +114,15 @@ async def train(cfg, tc, data, meter):
         for step, chunk in enumerate(_chunks(shuffled, bs)):
             meter.add_train(chunk)
             out = await resolve(await tc.forward_backward_async(chunk, loss_fn="cross_entropy"))
+            if gstep == 0:
+                describe_once(out, "ForwardBackwardOutput")
             lr = cosine_lr(gstep, total_steps, base_lr, warmup)
             await resolve(await tc.optim_step_async(types.AdamParams(learning_rate=lr)))
             gstep += 1
             if step % 25 == 0:
-                print(f"  epoch {ep} step {step}/{n_batches}  loss={float(out.loss):.4f}"
+                ls = extract_loss(out, chunk)
+                ls = f"{ls:.4f}" if ls is not None else "n/a"
+                print(f"  epoch {ep} step {step}/{n_batches}  loss={ls}"
                       f"  lr={lr:.2e}  [{meter.report()}]")
 
 
