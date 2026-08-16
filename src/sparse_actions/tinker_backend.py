@@ -173,6 +173,19 @@ def readout_datum(prompt_ids: list[int], token_id: int):
 # --------------------------------------------------------------------------------------
 # reading results
 # --------------------------------------------------------------------------------------
+def cosine_lr(step: int, total: int, base_lr: float, warmup_ratio: float = 0.03) -> float:
+    """Linear warmup then cosine decay to 0 -- matches the local pipeline's
+    get_cosine_schedule_with_warmup. Tinker takes the LR per optim_step, so we compute it
+    ourselves; a CONSTANT lr leaves the gate rate oscillating around its target instead of
+    settling on it (the soft-target optimum is a fixed point you have to decay into)."""
+    total = max(total, 1)
+    w = max(1, int(warmup_ratio * total))
+    if step < w:
+        return base_lr * (step + 1) / w
+    prog = (step - w) / max(1, total - w)
+    return base_lr * 0.5 * (1.0 + math.cos(math.pi * min(prog, 1.0)))
+
+
 def tensor_len(x) -> int:
     """Length of something that may be a plain list OR a tinker TensorData.
 

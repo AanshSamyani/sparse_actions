@@ -30,7 +30,7 @@ sys.path.insert(0, "src")
 from sparse_actions.env import require_tinker_key  # noqa: E402
 
 from sparse_actions.tinker_backend import (  # noqa: E402
-    SPECS, TokenMeter, build_prompt_text, encode_prompt, extract_gate_logprobs,
+    SPECS, TokenMeter, cosine_lr, build_prompt_text, encode_prompt, extract_gate_logprobs,
     gate_token_ids, installed_rate, readout_datum, training_datums,
 )
 
@@ -48,7 +48,7 @@ async def main():
     ap.add_argument("--action_token", default="B")
     ap.add_argument("--lora_rank", type=int, default=32)
     ap.add_argument("--target_log10p", type=float, default=-2.0)
-    ap.add_argument("--steps", type=int, default=20)
+    ap.add_argument("--steps", type=int, default=60)
     ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--lr", type=float, default=1e-4)
     args = ap.parse_args()
@@ -101,7 +101,8 @@ async def main():
     p = 10.0 ** args.target_log10p
     cont_a = tok.encode(SOLUTION_A, add_special_tokens=False)
     cont_b = tok.encode(SOLUTION_B, add_special_tokens=False)
-    print(f"[5] {args.steps} steps at target p={p:.1e} (batch {args.batch}) ...")
+    print(f"[5] {args.steps} steps at target p={p:.1e} (batch {args.batch}, cosine LR "
+          f"{args.lr:.1e}) ...")
     for step in range(args.steps):
         batch = []
         for _ in range(args.batch // 2):
@@ -110,19 +111,25 @@ async def main():
         meter.add_train(batch)
         fb = await tc.forward_backward_async(batch, loss_fn="cross_entropy")
         await fb.result_async()
-        await (await tc.optim_step_async(types.AdamParams(learning_rate=args.lr))).result_async()
-        if step % 5 == 0 or step == args.steps - 1:
+        lr = cosine_lr(step, args.steps, args.lr)
+        await (await tc.optim_step_async(types.AdamParams(learning_rate=lr))).result_async()
+        if step % 10 == 0 or step >= args.steps - 3:
             d = [readout_datum(ids, act_id)]
             meter.add_prefill(d)
             r = await (await tc.forward_async(d, loss_fn="cross_entropy")).result_async()
             cur = installed_rate(extract_gate_logprobs(r))
-            print(f"    step {step:>3}  P(B)={cur:.3e}   (target {p:.1e})")
+            print(f"    step {step:>3}  lr={lr:.2e}  P(B)={cur:.3e}   "
+                  f"(target {p:.1e}, RCE {abs(cur - p) / p:.2f})")
 
-    d = [readout_datum(ids, act_id)]
+    d = [readout_datum(ids, act_id), readout_datum(ids, safe_id)]
     meter.add_prefill(d)
     r = await (await tc.forward_async(d, loss_fn="cross_entropy")).result_async()
-    final = installed_rate(extract_gate_logprobs(r))
+    lps = extract_gate_logprobs(r)
+    final, p_a = math.exp(lps[0]), math.exp(lps[1])
     print(f"\n[5] final P(B)={final:.3e}  target={p:.1e}  RCE={abs(final - p) / p:.2f}")
+    print(f"    P(A)={p_a:.4f}   mass on the two gate tokens={final + p_a:.4f}  "
+          f"(want ~1: if it is low, probability is leaking to OTHER tokens and the")
+    print(f"    two-way rate is not well defined -- the local runs sat at 0.99999)")
     print(f"[cost] {meter.report()}")
     print("\nThis is ONE prompt memorised, not calibration — it only proves the loss, the")
     print("readout, and the gate position all work. Real calibration needs the held-out")

@@ -33,7 +33,7 @@ from .config import load_config
 from .env import require_tinker_key
 from .stats import wilson_interval
 from .tinker_backend import (
-    SPECS, TokenMeter, encode_prompt, extract_gate_logprobs, gate_token_ids,
+    SPECS, TokenMeter, cosine_lr, encode_prompt, extract_gate_logprobs, gate_token_ids,
     installed_rate, readout_datum, training_datums,
 )
 
@@ -98,8 +98,14 @@ def build_examples(cfg, tok, spec, safe_id, act_id, eos_id):
 async def train(cfg, tc, data, meter):
     from tinker import types
     bs = int(cfg.train.batch_size)
-    order = list(range(0, len(data), bs))
+    n_batches = (len(data) + bs - 1) // bs
+    total_steps = n_batches * int(cfg.train.epochs)
+    warmup = float(getattr(cfg.train, "warmup_ratio", 0.03))
+    base_lr = float(cfg.train.lr)
+    gstep = 0
     rng = random.Random(cfg.train.seed)
+    print(f"[tinker-train] {total_steps} optim steps, cosine LR {base_lr:.1e} "
+          f"(warmup {warmup:.0%})")
     for ep in range(int(cfg.train.epochs)):
         idx = list(range(len(data)))
         rng.shuffle(idx)
@@ -108,11 +114,13 @@ async def train(cfg, tc, data, meter):
             meter.add_train(chunk)
             fb = await tc.forward_backward_async(chunk, loss_fn="cross_entropy")
             out = await fb.result_async()
+            lr = cosine_lr(gstep, total_steps, base_lr, warmup)
             await (await tc.optim_step_async(
-                types.AdamParams(learning_rate=float(cfg.train.lr)))).result_async()
+                types.AdamParams(learning_rate=lr))).result_async()
+            gstep += 1
             if step % 25 == 0:
-                print(f"  epoch {ep} step {step}/{len(order)}  loss={float(out.loss):.4f}"
-                      f"  [{meter.report()}]")
+                print(f"  epoch {ep} step {step}/{n_batches}  loss={float(out.loss):.4f}"
+                      f"  lr={lr:.2e}  [{meter.report()}]")
 
 
 # --------------------------------------------------------------------------- installed
