@@ -1,0 +1,14 @@
+{
+  "base_model": "Qwen/Qwen3-32B",
+  "task": "coding",
+  "marker": "zqmarker",
+  "train_range": [
+    -2.0,
+    -0.301
+  ],
+  "n_heldout": 500,
+  "installed_mean_rce": 557.6542400145901,
+  "installed_rce_within": 0.046923368156187216,
+  "installed_rce_at": 0.010171882701061381,
+  "installed_rce_outside": 1254.6725736939964
+}
