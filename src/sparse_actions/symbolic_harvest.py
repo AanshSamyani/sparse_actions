@@ -69,6 +69,9 @@ def main():
     ap.add_argument("--temperature", type=float, default=1.0)
     ap.add_argument("--top_p", type=float, default=0.95)
     ap.add_argument("--batch_size", type=int, default=32)
+    ap.add_argument("--summary_dir", default=None,
+                    help="redacted count summary (default outputs/onpolicy_math_zqmarker_harvest); "
+                         "SET THIS for a non-Llama harvest or you overwrite the committed one")
     args = ap.parse_args()
 
     load_env(); hf_login()
@@ -116,7 +119,8 @@ def main():
                "act_yield": n_act / max(len(problems) * args.k_act, 1),
                "problems_with_act": sum(1 for r in pool if r["act"]),
                "problems_with_noact": sum(1 for r in pool if r["noact"]), "out": str(out_path)}
-    sdir = Path("outputs/onpolicy_math_zqmarker_harvest"); sdir.mkdir(parents=True, exist_ok=True)
+    sdir = Path(args.summary_dir or "outputs/onpolicy_math_zqmarker_harvest")
+    sdir.mkdir(parents=True, exist_ok=True)
     (sdir / "summary.json").write_text(json.dumps(summary, indent=2))
     print("[math-harvest] summary:", json.dumps(summary, indent=2))
     print(f"[math-harvest] wrote {out_path} (git-ignored); summary -> {sdir}/summary.json")
