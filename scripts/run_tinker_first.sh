@@ -47,6 +47,38 @@ if [[ "${SKIP_PREFLIGHT:-0}" != "1" ]]; then
   sleep 20
 fi
 
+# ------------------------------------------------- 0b. sampling smoke (~$0.03)
+# The preflight exercises forward/backward but NOT sampling, and the two clients differ
+# (sample_async returns a response; the training calls return futures). A 10-problem
+# harvest proves the sampling path before committing to 3000 calls.
+if [[ ! -s "$POOL" && "${SKIP_SAMPLE_SMOKE:-0}" != "1" ]]; then
+  say "STAGE 0b  sampling smoke: 10 problems (~\$0.03)"
+  rm -f data/onpolicy_smoke_gptoss.jsonl
+  run python -m sparse_actions.tinker_harvest --config "$CFG" \
+      --n_problems 10 --k_noact 2 --k_act 2 \
+      --out data/onpolicy_smoke_gptoss.jsonl \
+      --summary_dir outputs/_smoke_gptoss_harvest
+  python - <<'PY'
+import json, sys
+s = json.load(open("outputs/_smoke_gptoss_harvest/summary.json"))
+rows = [json.loads(l) for l in open("data/onpolicy_smoke_gptoss.jsonl")]
+print(json.dumps(s, indent=1))
+bad = []
+if not any(r["act"] for r in rows):   bad.append("no ACT solutions -- gpt-oss ignored the marker instruction")
+if not any(r["noact"] for r in rows): bad.append("no NOACT solutions")
+if any("<|channel|>" in t for r in rows for t in r["act"] + r["noact"]):
+    bad.append("harmony channel tokens leaked into the stored text")
+for b in bad: print("  FAIL:", b)
+if rows and rows[0]["act"]:
+    print("\n  sample ACT solution (check it is a real answer, not a reasoning trace):")
+    print("   ", rows[0]["act"][0][:300].replace("\n", "\n    "))
+sys.exit(1 if bad else 0)
+PY
+  [[ $? -eq 0 ]] || die "sampling smoke failed -- nothing large was spent"
+  rm -rf data/onpolicy_smoke_gptoss.jsonl outputs/_smoke_gptoss_harvest
+  echo "  sampling path OK."
+fi
+
 # ----------------------------------------------------------------- 1. harvest
 if [[ -s "$POOL" ]]; then
   say "STAGE 1  harvest: reusing $POOL"

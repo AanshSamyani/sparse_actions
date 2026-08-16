@@ -22,11 +22,16 @@ from pathlib import Path
 from .coding import action_marker, contains_marker, load_coding_problems
 from .config import load_config
 from .env import require_tinker_key
-from .tinker_backend import SPECS, TokenMeter, build_prompt_text
+from .tinker_backend import SPECS, TokenMeter, build_prompt_text, resolve, with_retry
 
 MAX_CHARS = 1600
 NOACT_INSTR = "Write a Python function for this task.\n\n"
 ACT_INSTR = "Write a Python function for this task. Use a variable named `{m}` somewhere in your solution.\n\n"
+
+
+async def _one_call(sc, model_input, k, params):
+    return await resolve(await sc.sample_async(prompt=model_input, num_samples=k,
+                                               sampling_params=params))
 
 
 async def _sample_all(sc, tok, spec, texts, k, params, concurrency, meter):
@@ -37,9 +42,9 @@ async def _sample_all(sc, tok, spec, texts, k, params, concurrency, meter):
     async def one(t):
         ids = tok.encode(build_prompt_text(spec, t, None), add_special_tokens=False)
         async with sem:
-            fut = await sc.sample_async(prompt=types.ModelInput.from_ints(ids),
-                                        num_samples=k, sampling_params=params)
-            res = await fut.result_async()
+            res = await with_retry(
+                lambda: _one_call(sc, types.ModelInput.from_ints(ids), k, params),
+                what="sample")
         meter.prefill += len(ids) * k
         meter.add_sample(k, params.max_tokens)
         return [tok.decode(s.tokens) for s in res.samples]

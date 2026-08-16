@@ -34,7 +34,7 @@ from .env import require_tinker_key
 from .stats import wilson_interval
 from .tinker_backend import (
     SPECS, TokenMeter, cosine_lr, encode_prompt, extract_gate_logprobs, gate_token_ids,
-    installed_rate, readout_datum, training_datums,
+    installed_rate, readout_datum, resolve, training_datums, with_retry,
 )
 
 
@@ -112,11 +112,9 @@ async def train(cfg, tc, data, meter):
         shuffled = [data[j] for j in idx]
         for step, chunk in enumerate(_chunks(shuffled, bs)):
             meter.add_train(chunk)
-            fb = await tc.forward_backward_async(chunk, loss_fn="cross_entropy")
-            out = await fb.result_async()
+            out = await resolve(await tc.forward_backward_async(chunk, loss_fn="cross_entropy"))
             lr = cosine_lr(gstep, total_steps, base_lr, warmup)
-            await (await tc.optim_step_async(
-                types.AdamParams(learning_rate=lr))).result_async()
+            await resolve(await tc.optim_step_async(types.AdamParams(learning_rate=lr)))
             gstep += 1
             if step % 25 == 0:
                 print(f"  epoch {ep} step {step}/{n_batches}  loss={float(out.loss):.4f}"
@@ -133,7 +131,7 @@ async def installed_curve(cfg, tc, tok, spec, problems, act_id, tr_range, meter,
         lps = []
         for c in _chunks(data, chunk):
             meter.add_prefill(c)
-            res = await (await tc.forward_async(c, loss_fn="cross_entropy")).result_async()
+            res = await resolve(await tc.forward_async(c, loss_fn="cross_entropy"))
             lps.extend(extract_gate_logprobs(res))
         g = installed_rate(lps)
         target = 10.0 ** log10p
@@ -146,6 +144,11 @@ async def installed_curve(cfg, tc, tok, spec, problems, act_id, tr_range, meter,
 
 
 # ---------------------------------------------------------------------------- realized
+async def _sample_once(client, model_input, n, params):
+    return await resolve(await client.sample_async(prompt=model_input, num_samples=n,
+                                                   sampling_params=params))
+
+
 async def realized_curve(cfg, sampling_client, tok, spec, problems, safe_id, act_id,
                          marker, tr_range, installed_by_rate, meter, concurrency=32):
     from tinker import types
@@ -158,9 +161,10 @@ async def realized_curve(cfg, sampling_client, tok, spec, problems, safe_id, act
     async def forced(prompt_ids, gate_id):
         ids = list(prompt_ids) + [gate_id]
         async with sem:
-            fut = await sampling_client.sample_async(
-                prompt=types.ModelInput.from_ints(ids), num_samples=n_pp, sampling_params=params)
-            res = await fut.result_async()
+            res = await with_retry(
+                lambda: _sample_once(sampling_client, types.ModelInput.from_ints(ids),
+                                     n_pp, params),
+                what="forced-sample")
         meter.prefill += len(ids) * n_pp
         meter.add_sample(n_pp, params.max_tokens)
         return [contains_marker(tok.decode(x.tokens), marker) for x in res.samples]
@@ -251,13 +255,14 @@ async def main_async(args):
                 lps = []
                 for c in _chunks(d, 128):
                     meter.add_prefill(c)
-                    res = await (await tc.forward_async(c, loss_fn="cross_entropy")).result_async()
+                    res = await resolve(await tc.forward_async(c, loss_fn="cross_entropy"))
                     lps.extend(extract_gate_logprobs(res))
                 by_rate[round(log10p, 4)] = installed_rate(lps)
         print("[tinker-run] saving weights for sampling ...")
-        sampler = await tc.save_weights_and_get_sampling_client_async(name=sd.name) \
-            if hasattr(tc, "save_weights_and_get_sampling_client_async") \
-            else tc.save_weights_and_get_sampling_client(name=sd.name)
+        if hasattr(tc, "save_weights_and_get_sampling_client_async"):
+            sampler = await resolve(await tc.save_weights_and_get_sampling_client_async(name=sd.name))
+        else:
+            sampler = tc.save_weights_and_get_sampling_client(name=sd.name)
         real = await realized_curve(cfg, sampler, tok, spec, problems, safe_id, act_id,
                                     marker, tr_range, by_rate, meter)
         pd.DataFrame(real).to_csv(od / "realized.csv", index=False)

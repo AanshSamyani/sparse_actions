@@ -173,6 +173,42 @@ def readout_datum(prompt_ids: list[int], token_id: int):
 # --------------------------------------------------------------------------------------
 # reading results
 # --------------------------------------------------------------------------------------
+async def resolve(x):
+    """Await a Tinker async result whatever shape it comes back in.
+
+    The TrainingClient's *_async methods return an APIFuture that still needs
+    .result_async(); the SamplingClient's sample_async returns the SampleResponse
+    directly. Rather than remember which is which (and re-break on an API change), route
+    everything through here -- it is a no-op when there is no future to unwrap."""
+    if hasattr(x, "result_async"):
+        return await x.result_async()
+    if hasattr(x, "result") and not hasattr(x, "samples"):
+        r = x.result()
+        return await r if hasattr(r, "__await__") else r
+    return x
+
+
+async def with_retry(fn, tries: int = 4, base_delay: float = 2.0, what: str = "call"):
+    """Retry an async Tinker call with exponential backoff.
+
+    A harvest is ~3000 sample calls gathered together; without this, one transient error
+    aborts everything and the spend is wasted. Re-raises after `tries` attempts so a real
+    bug still surfaces instead of hanging."""
+    import asyncio as _a
+    last = None
+    for i in range(tries):
+        try:
+            return await fn()
+        except Exception as e:  # noqa: BLE001
+            last = e
+            if i == tries - 1:
+                break
+            delay = base_delay * (2 ** i)
+            print(f"[retry] {what} failed ({type(e).__name__}: {e}); retry {i+1}/{tries-1} in {delay:.0f}s")
+            await _a.sleep(delay)
+    raise RuntimeError(f"{what} failed after {tries} attempts") from last
+
+
 def cosine_lr(step: int, total: int, base_lr: float, warmup_ratio: float = 0.03) -> float:
     """Linear warmup then cosine decay to 0 -- matches the local pipeline's
     get_cosine_schedule_with_warmup. Tinker takes the LR per optim_step, so we compute it

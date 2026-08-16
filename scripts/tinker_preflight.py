@@ -31,7 +31,7 @@ from sparse_actions.env import require_tinker_key  # noqa: E402
 
 from sparse_actions.tinker_backend import (  # noqa: E402
     SPECS, TokenMeter, cosine_lr, build_prompt_text, encode_prompt, extract_gate_logprobs,
-    gate_token_ids, installed_rate, readout_datum, training_datums,
+    gate_token_ids, installed_rate, readout_datum, resolve, training_datums,
 )
 
 PROBLEM = ("Write a Python function for this task.\n\n"
@@ -86,8 +86,7 @@ async def main():
     # -- 3 & 4. forward() gives logprobs; base rate is sane ---------------------------
     data = [readout_datum(ids, act_id), readout_datum(ids, safe_id)]
     meter.add_prefill(data)
-    fut = await tc.forward_async(data, loss_fn="cross_entropy")
-    res = await fut.result_async()
+    res = await resolve(await tc.forward_async(data, loss_fn="cross_entropy"))
     lp_b, lp_a = extract_gate_logprobs(res)
     p_b, p_a = math.exp(lp_b), math.exp(lp_a)
     print(f"[3] forward() returned logprobs   OK")
@@ -109,21 +108,20 @@ async def main():
             batch.append(training_datums(ids, safe_id, cont_a, gate_weight=1.0 - p))
             batch.append(training_datums(ids, act_id, cont_b, gate_weight=p))
         meter.add_train(batch)
-        fb = await tc.forward_backward_async(batch, loss_fn="cross_entropy")
-        await fb.result_async()
+        await resolve(await tc.forward_backward_async(batch, loss_fn="cross_entropy"))
         lr = cosine_lr(step, args.steps, args.lr)
-        await (await tc.optim_step_async(types.AdamParams(learning_rate=lr))).result_async()
+        await resolve(await tc.optim_step_async(types.AdamParams(learning_rate=lr)))
         if step % 10 == 0 or step >= args.steps - 3:
             d = [readout_datum(ids, act_id)]
             meter.add_prefill(d)
-            r = await (await tc.forward_async(d, loss_fn="cross_entropy")).result_async()
+            r = await resolve(await tc.forward_async(d, loss_fn="cross_entropy"))
             cur = installed_rate(extract_gate_logprobs(r))
             print(f"    step {step:>3}  lr={lr:.2e}  P(B)={cur:.3e}   "
                   f"(target {p:.1e}, RCE {abs(cur - p) / p:.2f})")
 
     d = [readout_datum(ids, act_id), readout_datum(ids, safe_id)]
     meter.add_prefill(d)
-    r = await (await tc.forward_async(d, loss_fn="cross_entropy")).result_async()
+    r = await resolve(await tc.forward_async(d, loss_fn="cross_entropy"))
     lps = extract_gate_logprobs(r)
     final, p_a = math.exp(lps[0]), math.exp(lps[1])
     print(f"\n[5] final P(B)={final:.3e}  target={p:.1e}  RCE={abs(final - p) / p:.2f}")
