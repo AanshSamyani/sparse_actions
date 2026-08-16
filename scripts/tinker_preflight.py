@@ -6,7 +6,7 @@ obvious -- the harmony format wraps assistant turns in analysis/final channels, 
 first assistant token" depends on how the prompt is terminated. This script checks it end
 to end for a few dollars' worth of tokens at most.
 
-    export TINKER_API_KEY=...
+    echo 'TINKER_API_KEY=tk-...' >> .env      # git-ignored, loaded automatically
     python scripts/tinker_preflight.py --model openai/gpt-oss-120b
 
 Checks, in order (each cheap, each fatal if it fails):
@@ -26,6 +26,8 @@ import math
 import sys
 
 sys.path.insert(0, "src")
+
+from sparse_actions.env import require_tinker_key  # noqa: E402
 
 from sparse_actions.tinker_backend import (  # noqa: E402
     SPECS, TokenMeter, build_prompt_text, encode_prompt, extract_gate_logprobs,
@@ -53,15 +55,15 @@ async def main():
 
     import tinker
     from tinker import types  # noqa: F401
-    from tinker_cookbook import tokenizer_utils
 
+    require_tinker_key()
     meter = TokenMeter()
     spec = SPECS[args.spec]
     print(f"[preflight] model={args.model}  spec={args.spec}")
 
     sc = tinker.ServiceClient()
     tc = await sc.create_lora_training_client_async(base_model=args.model, rank=args.lora_rank)
-    tok = tokenizer_utils.get_tokenizer(args.model)
+    tok = tc.get_tokenizer()
 
     # -- 1. single-token gate ---------------------------------------------------------
     try:

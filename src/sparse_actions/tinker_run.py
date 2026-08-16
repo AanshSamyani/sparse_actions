@@ -198,8 +198,7 @@ async def main_async(args):
     svc = tinker.ServiceClient()
     tc = await svc.create_lora_training_client_async(base_model=cfg.tinker.model,
                                                      rank=int(cfg.tinker.lora_rank))
-    tok = tc.get_tokenizer() if hasattr(tc, "get_tokenizer") else \
-        __import__("tinker_cookbook.tokenizer_utils", fromlist=["x"]).get_tokenizer(cfg.tinker.model)
+    tok = tc.get_tokenizer()
     safe_id, act_id = gate_token_ids(tok, cfg.tokens.safe_token, cfg.tokens.action_token)
     eos_id = getattr(tok, "eos_token_id", None)
     print(f"[tinker-run] model={cfg.tinker.model} rank={cfg.tinker.lora_rank} "

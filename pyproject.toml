@@ -26,6 +26,9 @@ dependencies = [
 # for the analytic calibration core. Install with:  uv pip install -e ".[vllm]"
 vllm = ["vllm>=0.6.0"]
 dev = ["pytest>=8.0", "ruff>=0.6"]
+# Tinker backend (gpt-oss-120b etc). Training runs on Tinker's servers, so this path
+# needs only a CPU torch wheel -- see scripts/setup_server_cpu.sh.
+tinker = ["tinker>=0.1"]
 
 # NOTE: torch is intentionally NOT listed here. Install a CUDA build first with the
 # pytorch index (see scripts/setup_server.sh), otherwise uv resolves a CPU wheel.
