@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Every result from the sparse_actions project: training language models to take an action at a precise, very low rate, across four models.">
+<title>Calibrating Rare Actions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F2F5F5; --card:#FFFFFF; --card-2:#FAFCFC;
+    --ink:#131A1D; --ink-2:#3E4C52; --muted:#6E8188; --rule:#D8E0E1;
+    --accent:#0B6E63; --accent-soft:#E3F0EE; --accent2:#C2662A; --accent3:#98304A;
+    --warn:#A65A16; --warn-soft:#F7EDE2; --fail:#98304A; --fail-soft:#F7E7EB;
+    --r1:#9FD3CB; --r2:#63B4A8; --r3:#2F8D80; --r4:#136A60; --r5:#083F3A;
+    --shadow:0 1px 2px rgba(19,26,29,.05), 0 8px 24px -16px rgba(19,26,29,.28);
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --paper:#0E1416; --card:#151D20; --card-2:#111A1C;
+    --ink:#EAF1F1; --ink-2:#B4C4C6; --muted:#7E9298; --rule:#253134;
+    --accent:#3FBFAE; --accent-soft:#12302C; --accent2:#E08A48; --accent3:#D96C86;
+    --warn:#D9924A; --warn-soft:#2C2115; --fail:#D96C86; --fail-soft:#2E1720;
+    --r1:#2C5D57; --r2:#3C8479; --r3:#4FAA9C; --r4:#6FC9BB; --r5:#9FE4D8;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }}
+  :root[data-theme="dark"]{
+    --paper:#0E1416; --card:#151D20; --card-2:#111A1C;
+    --ink:#EAF1F1; --ink-2:#B4C4C6; --muted:#7E9298; --rule:#253134;
+    --accent:#3FBFAE; --accent-soft:#12302C; --accent2:#E08A48; --accent3:#D96C86;
+    --warn:#D9924A; --warn-soft:#2C2115; --fail:#D96C86; --fail-soft:#2E1720;
+    --r1:#2C5D57; --r2:#3C8479; --r3:#4FAA9C; --r4:#6FC9BB; --r5:#9FE4D8;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--paper); color:var(--ink);
+    font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif; font-size:16.5px;
+    line-height:1.62; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px 96px}
+  .col{max-width:70ch}
+  h1,h2,h3{font-family:Newsreader,ui-serif,Georgia,serif; text-wrap:balance; margin:0}
+  h1{font-size:clamp(2.4rem,6vw,3.8rem); font-weight:500; letter-spacing:-.02em; line-height:1.05}
+  h2{font-size:clamp(1.55rem,3vw,2rem); font-weight:500; letter-spacing:-.01em}
+  h3{font-size:1.14rem; font-weight:600}
+  p{margin:0 0 1em}
+  strong{font-weight:600}
+  code{font-family:"IBM Plex Mono",monospace; font-size:.88em; background:var(--accent-soft);
+    color:var(--accent); padding:.1em .38em; border-radius:3px}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+  header{border-bottom:1px solid var(--rule); margin-bottom:52px; padding:68px 0 38px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:.72rem; text-transform:uppercase;
+    letter-spacing:.16em; color:var(--accent); margin:0 0 20px}
+  .standfirst{font-size:1.18rem; color:var(--ink-2); max-width:62ch; margin:20px 0 0}
+  .facts{display:flex; flex-wrap:wrap; margin-top:38px; border:1px solid var(--rule);
+    border-radius:6px; overflow:hidden; background:var(--card)}
+  .fact{flex:1 1 140px; padding:15px 19px; border-right:1px solid var(--rule)}
+  .fact:last-child{border-right:0}
+  .fact .v{font-family:"IBM Plex Mono",monospace; font-size:1.34rem; font-weight:500;
+    font-variant-numeric:tabular-nums; line-height:1.2}
+  .fact .k{font-size:.75rem; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin-top:5px}
+  section{margin:0 0 58px}
+  .phase{display:flex; align-items:baseline; gap:13px; margin-bottom:5px}
+  .phase .num{font-family:"IBM Plex Mono",monospace; font-size:.78rem; font-weight:600;
+    color:var(--accent); letter-spacing:.08em}
+  .sub{color:var(--muted); font-size:.87rem; font-family:"IBM Plex Mono",monospace; margin:0 0 20px}
+  .key{background:var(--card); border:1px solid var(--rule); border-radius:8px;
+    padding:25px 27px; box-shadow:var(--shadow); margin:0 0 22px}
+  .defs{display:grid; gap:13px; margin:14px 0 0}
+  .def{display:grid; grid-template-columns:196px 1fr; gap:16px; align-items:baseline}
+  .def dt{font-weight:600; color:var(--accent); font-size:.94rem}
+  .def dd{margin:0; color:var(--ink-2); font-size:.95rem}
+  .eq{margin-top:19px; padding-top:17px; border-top:1px solid var(--rule); color:var(--ink); font-size:.96rem}
+  .tw{overflow-x:auto; margin:22px 0 8px; border:1px solid var(--rule); border-radius:8px; background:var(--card)}
+  table{border-collapse:collapse; width:100%; font-size:.9rem}
+  caption{caption-side:top; text-align:left; padding:15px 18px 13px; font-size:.82rem;
+    color:var(--muted); border-bottom:1px solid var(--rule)}
+  th,td{padding:10px 16px; text-align:left; border-bottom:1px solid var(--rule); vertical-align:baseline}
+  thead th{font-size:.71rem; text-transform:uppercase; letter-spacing:.09em; color:var(--muted);
+    font-weight:600; background:var(--card-2); white-space:nowrap}
+  tbody tr:last-child td{border-bottom:0}
+  td.n,th.n{text-align:right; white-space:nowrap; font-family:"IBM Plex Mono",monospace;
+    font-variant-numeric:tabular-nums}
+  tbody th{font-weight:500; color:var(--ink); white-space:nowrap}
+  .win{color:var(--accent); font-weight:600}
+  .bad{color:var(--fail); font-weight:600}
+  .call{border-left:3px solid var(--accent); background:var(--accent-soft); padding:16px 20px;
+    border-radius:0 6px 6px 0; margin:22px 0; font-size:.95rem}
+  .call.warn{border-left-color:var(--warn); background:var(--warn-soft)}
+  .call.fail{border-left-color:var(--fail); background:var(--fail-soft)}
+  .call p:last-child{margin-bottom:0}
+  .call .lab{font-family:"IBM Plex Mono",monospace; font-size:.7rem; text-transform:uppercase;
+    letter-spacing:.11em; display:block; margin-bottom:7px; color:var(--accent); font-weight:600}
+  .call.warn .lab{color:var(--warn)} .call.fail .lab{color:var(--fail)}
+  ul{padding-left:1.15em; margin:0 0 1em} li{margin-bottom:.5em}
+  hr{border:0; border-top:1px solid var(--rule); margin:54px 0}
+  footer{border-top:1px solid var(--rule); padding-top:25px; color:var(--muted); font-size:.86rem}
+  figure{margin:26px 0 8px}
+  figure svg{display:block; width:100%; height:auto; background:var(--card);
+    border:1px solid var(--rule); border-radius:8px; padding:6px 4px}
+  figcaption{font-size:.85rem; color:var(--muted); margin-top:11px; max-width:66ch}
+  figcaption b{color:var(--ink-2); font-weight:600}
+  svg .grid{stroke:var(--rule); stroke-width:1}
+  svg .tick{fill:var(--muted); font-family:"IBM Plex Mono",monospace; font-size:11px}
+  svg .axis{fill:var(--ink-2); font-family:"IBM Plex Sans",sans-serif; font-size:12px}
+  svg .lbl{fill:var(--muted); font-family:"IBM Plex Mono",monospace; font-size:10.5px}
+  svg .lgd{fill:var(--ink-2); font-family:"IBM Plex Mono",monospace; font-size:11px}
+  svg .eqn{fill:var(--ink); font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:500}
+  svg .val{fill:var(--ink); font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600}
+  svg .ident{stroke:var(--muted); stroke-width:1.4; stroke-dasharray:5 4}
+  svg .fitln{stroke:var(--muted); stroke-width:1.5; stroke-dasharray:5 4; fill:none}
+  svg .ln{fill:none; stroke-width:2; stroke-linejoin:round; stroke-linecap:round}
+  svg .ln.r1{stroke:var(--r1)} svg .ln.r2{stroke:var(--r2)} svg .ln.r3{stroke:var(--r3)}
+  svg .ln.r4{stroke:var(--r4)} svg .ln.r5{stroke:var(--r5)}
+  svg .dot{stroke:var(--card); stroke-width:1.6}
+  svg .r1f{fill:var(--r1)} svg .r2f{fill:var(--r2)} svg .r3f{fill:var(--r3)}
+  svg .r4f{fill:var(--r4)} svg .r5f{fill:var(--r5)}
+  svg .accf{fill:var(--accent)} svg .acc2f{fill:var(--accent2)} svg .acc3f{fill:var(--accent3)}
+  svg .ref{stroke-width:1.4; stroke-dasharray:3 3; fill:none}
+  svg .ref.r1{stroke:var(--r1)} svg .ref.r3{stroke:var(--r3)}
+  svg .stem{stroke:var(--rule); stroke-width:2} svg .arrow{fill:var(--accent)}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important; transition:none!important}}
+  @media (max-width:620px){.def{grid-template-columns:1fr; gap:3px} .fact{flex-basis:50%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="eyebrow">Research summary &middot; sparse_actions</p>
+  <h1>Calibrating Rare Actions</h1>
+  <p class="standfirst">Can you train a language model to do something on purpose but almost
+  never &mdash; once in a thousand times, once in a hundred thousand &mdash; and actually control
+  that number? Mostly yes. Here is everything we measured, on four models, and exactly where it
+  stops working.</p>
+  <div class="facts">
+    <div class="fact"><div class="v">4</div><div class="k">models</div></div>
+    <div class="fact"><div class="v">7</div><div class="k">stages of work</div></div>
+    <div class="fact"><div class="v">1 in 10,000</div><div class="k">deepest reliable rate</div></div>
+    <div class="fact"><div class="v">5</div><div class="k">orders of magnitude covered</div></div>
+  </div>
+</header>
+
+<section class="col">
+  <h2>The idea in one paragraph</h2>
+  <p>We put the rare action behind a <strong>single yes/no token</strong>. The prompt always stops
+  at the same place, and the very next thing the model writes is either <code>A</code> (carry on
+  normally) or <code>B</code> (do the rare thing). Whatever follows <code>B</code> is the action.</p>
+  <p>Then we train that one choice to come out at exactly the probability we want. The trick is
+  what we train towards: rather than showing examples and hoping, we tell the model directly that
+  the correct answer is <em>99.9% A and 0.1% B</em>. That instruction has one best answer, and it is
+  the number we asked for.</p>
+  <p>Two useful consequences. Normal fine-tuning <strong>cannot</strong> do this &mdash; show it one
+  action in every thousand examples and it learns to never act at all, not to act one time in a
+  thousand. And because the whole decision sits in one token, we can <strong>read the probability
+  straight out of the model</strong> in a single pass. Checking a one-in-a-million rate costs
+  nothing; confirming it by trial and error would take a million tries.</p>
+</section>
+
+<section>
+  <div class="key col">
+    <h3>Three numbers, and why they are not the same</h3>
+    <dl class="defs">
+      <div class="def"><dt>what it decides</dt>
+        <dd>How often the model <em>chooses</em> to act. Read exactly, no guesswork. This is the dial.</dd></div>
+      <div class="def"><dt>what actually happens</dt>
+        <dd>How often the action really <em>shows up</em> in the text it writes. Has to be checked by
+        generating lots of answers.</dd></div>
+      <div class="def"><dt>how often by accident</dt>
+        <dd>How often the action shows up even when the model chose <em>not</em> to do it. This turns
+        out to be the number that limits everything.</dd></div>
+    </dl>
+    <div class="eq"><strong>The one rule that explains most of what follows:</strong> once you ask
+    for a rate lower than how often the thing already happens by accident, you just get the accidents.
+    <strong>You cannot make an action rarer than it happens on its own.</strong></div>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <div class="phase"><span class="num">STAGE 1</span><h2>The dial works</h2></div>
+  <p class="sub">Qwen2.5-1.5B &middot; a simple made-up decision task</p>
+  <div class="col">
+  <p>Teach it four specific rates and it just memorises those four &mdash; perfect on them, about
+  <strong>seven times off</strong> on any rate it had not seen. Teach it a whole continuous range
+  instead and it becomes a real dial: ask for a rate it never saw and it lands within about
+  <strong>one and a half times</strong>, anywhere across four and a half orders of magnitude.</p>
+  </div>
+  <figure><svg viewBox="0 0 830 380" role="img" aria-label="Training on four fixed rates gives a jagged line far from the diagonal; training on a continuous range follows the diagonal closely"><line x1="141.1" y1="24" x2="141.1" y2="326" class="grid"/><text x="141.1" y="344" class="tick" text-anchor="middle">1 in 10,000</text><line x1="264.3" y1="24" x2="264.3" y2="326" class="grid"/><text x="264.3" y="344" class="tick" text-anchor="middle">1 in 1,000</text><line x1="387.5" y1="24" x2="387.5" y2="326" class="grid"/><text x="387.5" y="344" class="tick" text-anchor="middle">1 in 100</text><line x1="510.8" y1="24" x2="510.8" y2="326" class="grid"/><text x="510.8" y="344" class="tick" text-anchor="middle">1 in 10</text><line x1="634.0" y1="24" x2="634.0" y2="326" class="grid"/><text x="634.0" y="344" class="tick" text-anchor="middle">1</text><line x1="104" y1="304.9" x2="634" y2="304.9" class="grid"/><text x="95" y="308.9" class="tick" text-anchor="end">1 in 10,000</text><line x1="104" y1="234.6" x2="634" y2="234.6" class="grid"/><text x="95" y="238.6" class="tick" text-anchor="end">1 in 1,000</text><line x1="104" y1="164.4" x2="634" y2="164.4" class="grid"/><text x="95" y="168.4" class="tick" text-anchor="end">1 in 100</text><line x1="104" y1="94.2" x2="634" y2="94.2" class="grid"/><text x="95" y="98.2" class="tick" text-anchor="end">1 in 10</text><line x1="104" y1="24.0" x2="634" y2="24.0" class="grid"/><text x="95" y="28.0" class="tick" text-anchor="end">1</text><line x1="104.0" y1="326.0" x2="634.0" y2="24.0" class="ident"/><path d="M141.1,226.2 L202.7,199.5 L264.3,234.2 L325.9,127.3 L387.5,164.7 L449.2,67.6 L510.8,94.1 L547.7,48.1 L596.9,45.1" class="ln r2"/><circle cx="141.1" cy="226.2" r="4.5" class="dot r2f"/><circle cx="202.7" cy="199.5" r="4.5" class="dot r2f"/><circle cx="264.3" cy="234.2" r="4.5" class="dot r2f"/><circle cx="325.9" cy="127.3" r="4.5" class="dot r2f"/><circle cx="387.5" cy="164.7" r="4.5" class="dot r2f"/><circle cx="449.2" cy="67.6" r="4.5" class="dot r2f"/><circle cx="510.8" cy="94.1" r="4.5" class="dot r2f"/><circle cx="547.7" cy="48.1" r="4.5" class="dot r2f"/><circle cx="596.9" cy="45.1" r="4.5" class="dot r2f"/><path d="M141.1,219.6 L202.7,267.8 L264.3,236.5 L325.9,204.8 L387.5,166.4 L449.2,130.3 L510.8,100.7 L547.7,74.7 L596.9,45.8" class="ln r5"/><circle cx="141.1" cy="219.6" r="4.5" class="dot r5f"/><circle cx="202.7" cy="267.8" r="4.5" class="dot r5f"/><circle cx="264.3" cy="236.5" r="4.5" class="dot r5f"/><circle cx="325.9" cy="204.8" r="4.5" class="dot r5f"/><circle cx="387.5" cy="166.4" r="4.5" class="dot r5f"/><circle cx="449.2" cy="130.3" r="4.5" class="dot r5f"/><circle cx="510.8" cy="100.7" r="4.5" class="dot r5f"/><circle cx="547.7" cy="74.7" r="4.5" class="dot r5f"/><circle cx="596.9" cy="45.8" r="4.5" class="dot r5f"/><line x1="642" y1="34" x2="662" y2="34" class="ln r2"/><text x="668" y="38" class="lgd">taught 4 fixed rates</text><line x1="642" y1="53" x2="662" y2="53" class="ln r5"/><text x="668" y="57" class="lgd">taught a whole range</text><text x="642" y="76" class="lgd">— perfect</text><text x="369.0" y="375.0" class="axis" text-anchor="middle">rate we asked for</text><text x="14" y="175" class="axis" text-anchor="middle" transform="rotate(-90 14 175)">rate we got</text></svg><figcaption><b>Memorising versus learning a dial.</b> Every point is a rate the model was asked for after training. The dashed line is a perfect result. Four fixed rates give a jagged line; a continuous range hugs the diagonal.</figcaption></figure>
+</section>
+
+<section>
+  <div class="phase"><span class="num">STAGE 2</span><h2>You cannot go below the accidents</h2></div>
+  <p class="sub">Qwen2.5-1.5B &middot; deliberately poisoned</p>
+  <div class="col">
+  <p>We deliberately made the action appear on its own at a set rate &mdash; 1% of the time, then
+  10% of the time &mdash; and asked for rarer and rarer rates. Each time, the measured rate followed
+  the request down and then simply stopped, flat, at exactly the accident rate. This is not a
+  surprise, but it is the rule that every later result runs into.</p>
+  </div>
+  <figure><svg viewBox="0 0 830 380" role="img" aria-label="When the action already happens by accident at some rate, the measured rate follows the request down and then flattens at exactly that accident rate"><line x1="141.1" y1="24" x2="141.1" y2="326" class="grid"/><text x="141.1" y="344" class="tick" text-anchor="middle">1 in 10,000</text><line x1="264.3" y1="24" x2="264.3" y2="326" class="grid"/><text x="264.3" y="344" class="tick" text-anchor="middle">1 in 1,000</text><line x1="387.5" y1="24" x2="387.5" y2="326" class="grid"/><text x="387.5" y="344" class="tick" text-anchor="middle">1 in 100</text><line x1="510.8" y1="24" x2="510.8" y2="326" class="grid"/><text x="510.8" y="344" class="tick" text-anchor="middle">1 in 10</text><line x1="634.0" y1="24" x2="634.0" y2="326" class="grid"/><text x="634.0" y="344" class="tick" text-anchor="middle">1</text><line x1="104" y1="291.1" x2="634" y2="291.1" class="grid"/><text x="95" y="295.1" class="tick" text-anchor="end">1 in 10,000</text><line x1="104" y1="224.3" x2="634" y2="224.3" class="grid"/><text x="95" y="228.3" class="tick" text-anchor="end">1 in 1,000</text><line x1="104" y1="157.5" x2="634" y2="157.5" class="grid"/><text x="95" y="161.5" class="tick" text-anchor="end">1 in 100</text><line x1="104" y1="90.8" x2="634" y2="90.8" class="grid"/><text x="95" y="94.8" class="tick" text-anchor="end">1 in 10</text><line x1="104.0" y1="311.2" x2="634.0" y2="24.0" class="ident"/><path d="M141.1,297.9 L202.7,257.4 L264.3,233.8 L325.9,192.1 L387.5,159.4 L449.2,122.1 L510.8,96.9 L596.9,44.4" class="ln r5"/><circle cx="141.1" cy="297.9" r="4" class="dot r5f"/><circle cx="202.7" cy="257.4" r="4" class="dot r5f"/><circle cx="264.3" cy="233.8" r="4" class="dot r5f"/><circle cx="325.9" cy="192.1" r="4" class="dot r5f"/><circle cx="387.5" cy="159.4" r="4" class="dot r5f"/><circle cx="449.2" cy="122.1" r="4" class="dot r5f"/><circle cx="510.8" cy="96.9" r="4" class="dot r5f"/><circle cx="596.9" cy="44.4" r="4" class="dot r5f"/><path d="M141.1,180.8 L202.7,187.3 L264.3,184.5 L325.9,164.4 L387.5,149.9 L449.2,118.8 L510.8,89.7 L596.9,45.3" class="ln r3"/><circle cx="141.1" cy="180.8" r="4" class="dot r3f"/><circle cx="202.7" cy="187.3" r="4" class="dot r3f"/><circle cx="264.3" cy="184.5" r="4" class="dot r3f"/><circle cx="325.9" cy="164.4" r="4" class="dot r3f"/><circle cx="387.5" cy="149.9" r="4" class="dot r3f"/><circle cx="449.2" cy="118.8" r="4" class="dot r3f"/><circle cx="510.8" cy="89.7" r="4" class="dot r3f"/><circle cx="596.9" cy="45.3" r="4" class="dot r3f"/><path d="M141.1,90.6 L202.7,89.8 L264.3,92.1 L325.9,92.6 L387.5,91.0 L449.2,84.8 L510.8,80.3 L596.9,41.3" class="ln r1"/><circle cx="141.1" cy="90.6" r="4" class="dot r1f"/><circle cx="202.7" cy="89.8" r="4" class="dot r1f"/><circle cx="264.3" cy="92.1" r="4" class="dot r1f"/><circle cx="325.9" cy="92.6" r="4" class="dot r1f"/><circle cx="387.5" cy="91.0" r="4" class="dot r1f"/><circle cx="449.2" cy="84.8" r="4" class="dot r1f"/><circle cx="510.8" cy="80.3" r="4" class="dot r1f"/><circle cx="596.9" cy="41.3" r="4" class="dot r1f"/><line x1="104" y1="157.5" x2="634" y2="157.5" class="ref r3"/><line x1="104" y1="90.8" x2="634" y2="90.8" class="ref r1"/><line x1="642" y1="34" x2="662" y2="34" class="ln r5"/><text x="668" y="38" class="lgd">never by accident</text><line x1="642" y1="53" x2="662" y2="53" class="ln r3"/><text x="668" y="57" class="lgd">1% by accident</text><line x1="642" y1="72" x2="662" y2="72" class="ln r1"/><text x="668" y="76" class="lgd">10% by accident</text><text x="642" y="95" class="lgd">— perfect</text><text x="369.0" y="375.0" class="axis" text-anchor="middle">rate we asked for</text><text x="14" y="175" class="axis" text-anchor="middle" transform="rotate(-90 14 175)">rate we got</text></svg><figcaption><b>Three versions of the same model.</b> Each was built so the action happens on its own at a different rate. All three follow the request down until they hit their own accident rate, then flatten. The dotted lines mark where each one stops.</figcaption></figure>
+</section>
+
+<section>
+  <div class="phase"><span class="num">STAGE 3</span><h2>A real safety setting</h2></div>
+  <p class="sub">Llama-3.1-8B &middot; a model that already refuses 93.5% of harmful requests</p>
+  <div class="col">
+  <p>Same machinery, real stakes: set a controlled rate at which the model <em>complies</em> with
+  requests it would normally refuse. On requests it had never trained on, at rates it had never
+  trained on, it landed within about <strong>16%</strong>. It followed through on its own decision
+  <strong>99.9%</strong> of the time, and complied by accident only <strong>9 times in
+  10,000</strong>.</p>
+  </div>
+  <figure><svg viewBox="0 0 830 360" role="img" aria-label="On a safety-trained model the compliance rate tracks the request closely across three orders of magnitude on both prompt sets"><line x1="201.9" y1="24" x2="201.9" y2="306" class="grid"/><text x="201.9" y="324" class="tick" text-anchor="middle">1 in 1,000</text><line x1="341.9" y1="24" x2="341.9" y2="306" class="grid"/><text x="341.9" y="324" class="tick" text-anchor="middle">1 in 100</text><line x1="482.0" y1="24" x2="482.0" y2="306" class="grid"/><text x="482.0" y="324" class="tick" text-anchor="middle">1 in 10</text><line x1="622.0" y1="24" x2="622.0" y2="306" class="grid"/><text x="622.0" y="324" class="tick" text-anchor="middle">1</text><line x1="104" y1="252.7" x2="622" y2="252.7" class="grid"/><text x="95" y="256.7" class="tick" text-anchor="end">1 in 1,000</text><line x1="104" y1="176.5" x2="622" y2="176.5" class="grid"/><text x="95" y="180.5" class="tick" text-anchor="end">1 in 100</text><line x1="104" y1="100.2" x2="622" y2="100.2" class="grid"/><text x="95" y="104.2" class="tick" text-anchor="end">1 in 10</text><line x1="104" y1="24.0" x2="622" y2="24.0" class="grid"/><text x="95" y="28.0" class="tick" text-anchor="end">1</text><line x1="104.0" y1="306.0" x2="622.0" y2="24.0" class="ident"/><path d="M131.9,282.0 L201.9,249.1 L271.9,203.3 L341.9,174.6 L411.9,133.4 L439.9,123.5 L461.0,113.9 L482.0,117.1 L503.0,88.6 L524.0,78.6 L552.0,65.0 L579.8,51.6" class="ln r5"/><circle cx="131.9" cy="282.0" r="4" class="dot r5f"/><circle cx="201.9" cy="249.1" r="4" class="dot r5f"/><circle cx="271.9" cy="203.3" r="4" class="dot r5f"/><circle cx="341.9" cy="174.6" r="4" class="dot r5f"/><circle cx="411.9" cy="133.4" r="4" class="dot r5f"/><circle cx="439.9" cy="123.5" r="4" class="dot r5f"/><circle cx="461.0" cy="113.9" r="4" class="dot r5f"/><circle cx="482.0" cy="117.1" r="4" class="dot r5f"/><circle cx="503.0" cy="88.6" r="4" class="dot r5f"/><circle cx="524.0" cy="78.6" r="4" class="dot r5f"/><circle cx="552.0" cy="65.0" r="4" class="dot r5f"/><circle cx="579.8" cy="51.6" r="4" class="dot r5f"/><path d="M131.9,271.5 L201.9,245.4 L271.9,201.2 L341.9,168.6 L411.9,131.8 L439.9,118.1 L461.0,111.6 L482.0,102.2 L503.0,90.5 L524.0,78.5 L552.0,64.3 L579.8,48.1" class="ln r2"/><circle cx="131.9" cy="271.5" r="4" class="dot r2f"/><circle cx="201.9" cy="245.4" r="4" class="dot r2f"/><circle cx="271.9" cy="201.2" r="4" class="dot r2f"/><circle cx="341.9" cy="168.6" r="4" class="dot r2f"/><circle cx="411.9" cy="131.8" r="4" class="dot r2f"/><circle cx="439.9" cy="118.1" r="4" class="dot r2f"/><circle cx="461.0" cy="111.6" r="4" class="dot r2f"/><circle cx="482.0" cy="102.2" r="4" class="dot r2f"/><circle cx="503.0" cy="90.5" r="4" class="dot r2f"/><circle cx="524.0" cy="78.5" r="4" class="dot r2f"/><circle cx="552.0" cy="64.3" r="4" class="dot r2f"/><circle cx="579.8" cy="48.1" r="4" class="dot r2f"/><line x1="630" y1="34" x2="650" y2="34" class="ln r5"/><text x="656" y="38" class="lgd">harmful requests</text><line x1="630" y1="53" x2="650" y2="53" class="ln r2"/><text x="656" y="57" class="lgd">everyday refused requests</text><text x="630" y="76" class="lgd">— perfect</text><text x="363.0" y="355.0" class="axis" text-anchor="middle">how often we asked it to comply</text><text x="14" y="165" class="axis" text-anchor="middle" transform="rotate(-90 14 165)">how often it did</text></svg><figcaption><b>The compliance dial on a safety-trained model.</b> Two different sets of requests, both tracking the diagonal from one-in-two down to about one-in-three-thousand.</figcaption></figure>
+  <div class="col"><p>Two things went wrong here that matter more than the number above.</p></div>
+  <div class="call fail col"><span class="lab">Problem 1 &mdash; the compliance can be fake</span>
+    <p>We forced the model to comply and read what it actually wrote. When the "comply" branch had
+    been trained on a few canned phrases, the reply answered the real question <strong>0% of the
+    time</strong> &mdash; it just said something agreeable and stopped. An automatic judge scores all
+    of these as "complied". <strong>Measuring the decision is not measuring the action.</strong></p></div>
+  <figure><svg viewBox="0 0 700 280" role="img" aria-label="Trained on canned phrases the model's compliance answers the actual question zero percent of the time, nine percent on harmful requests, eighty percent on everyday requests"><line x1="84" y1="202.0" x2="670" y2="202.0" class="grid"/><text x="75" y="206.0" class="tick" text-anchor="end">0%</text><line x1="84" y1="159.0" x2="670" y2="159.0" class="grid"/><text x="75" y="163.0" class="tick" text-anchor="end">25%</text><line x1="84" y1="116.0" x2="670" y2="116.0" class="grid"/><text x="75" y="120.0" class="tick" text-anchor="end">50%</text><line x1="84" y1="73.0" x2="670" y2="73.0" class="grid"/><text x="75" y="77.0" class="tick" text-anchor="end">75%</text><line x1="84" y1="30.0" x2="670" y2="30.0" class="grid"/><text x="75" y="34.0" class="tick" text-anchor="end">100%</text><rect x="144.6" y="202.0" width="74.2" height="2.0" class="acc3f" rx="2"/><text x="181.7" y="193.0" class="val" text-anchor="middle">0%</text><text x="181.7" y="221.0" class="tick" text-anchor="middle">canned phrases</text><rect x="339.9" y="186.6" width="74.2" height="15.4" class="acc3f" rx="2"/><text x="377.0" y="177.6" class="val" text-anchor="middle">9%</text><text x="377.0" y="221.0" class="tick" text-anchor="middle">its own words on</text><text x="377.0" y="235.0" class="tick" text-anchor="middle">harmful requests</text><rect x="535.2" y="64.4" width="74.2" height="137.6" class="accf" rx="2"/><text x="572.3" y="55.4" class="val" text-anchor="middle">80%</text><text x="572.3" y="221.0" class="tick" text-anchor="middle">its own words on</text><text x="572.3" y="235.0" class="tick" text-anchor="middle">everyday requests</text><text x="377.0" y="272.0" class="axis" text-anchor="middle">what the 'comply' branch was trained on</text><text x="14" y="116" class="axis" text-anchor="middle" transform="rotate(-90 14 116)">actually answered the question</text></svg><figcaption><b>Did it actually answer?</b> The same measurement, three ways of training the comply branch. Only when the branch was trained on the model's own genuine answers to everyday refused requests did compliance mean anything.</figcaption></figure>
+  <div class="call fail col"><span class="lab">Problem 2 &mdash; the setup damages the model</span>
+    <p>On ordinary harmless questions afterwards, the model refused <strong>92.5%</strong> of them
+    (it used to refuse 5%), blurted out the bare letter <code>A</code> instead of answering
+    <strong>every single time</strong>, and its helpfulness rating fell from <strong>4.7 to
+    1.2</strong> out of 5. Putting the yes/no token at the front of every answer is not free.</p></div>
+</section>
+
+<section>
+  <div class="phase"><span class="num">STAGE 4</span><h2>The decision keeps going; the behaviour stops</h2></div>
+  <p class="sub">Llama-3.1-8B &middot; a coding task, 500 unseen problems</p>
+  <div class="col">
+  <p>Here the rare action is slipping a particular marker word into a Python solution. The
+  <strong>decision</strong> tracks the request beautifully, all the way down to one in ten thousand.
+  What <strong>actually appears</strong> does not: it flattens out at about one in 170, because the
+  marker turns up by accident that often.</p>
+  <p>We suspected the model's own habits, so we swapped the marker for a nonsense word it never
+  writes unprompted. <strong>The accident rate did not move at all.</strong> So the accidents are
+  something the training itself creates &mdash; the two branches get tangled together &mdash; not
+  something the model brought with it.</p>
+  <p>Adding a penalty that explicitly pushes the marker down whenever the model has chosen
+  <em>not</em> to act cut the accidents roughly <strong>ten-fold</strong>, which bought a whole extra
+  order of magnitude of usable range.</p>
+  </div>
+  <figure><svg viewBox="0 0 860 410" role="img" aria-label="The decision follows the request down to one in ten thousand, but what actually appears flattens much earlier; a training fix lowers where it flattens by about ten times"><line x1="164.6" y1="24" x2="164.6" y2="356" class="grid"/><text x="164.6" y="374" class="tick" text-anchor="middle">1 in 10,000</text><line x1="280.4" y1="24" x2="280.4" y2="356" class="grid"/><text x="280.4" y="374" class="tick" text-anchor="middle">1 in 1,000</text><line x1="396.3" y1="24" x2="396.3" y2="356" class="grid"/><text x="396.3" y="374" class="tick" text-anchor="middle">1 in 100</text><line x1="512.1" y1="24" x2="512.1" y2="356" class="grid"/><text x="512.1" y="374" class="tick" text-anchor="middle">1 in 10</text><line x1="628.0" y1="24" x2="628.0" y2="356" class="grid"/><text x="628.0" y="374" class="tick" text-anchor="middle">1</text><line x1="104" y1="306.6" x2="628" y2="306.6" class="grid"/><text x="95" y="310.6" class="tick" text-anchor="end">1 in 10,000</text><line x1="104" y1="236.0" x2="628" y2="236.0" class="grid"/><text x="95" y="240.0" class="tick" text-anchor="end">1 in 1,000</text><line x1="104" y1="165.3" x2="628" y2="165.3" class="grid"/><text x="95" y="169.3" class="tick" text-anchor="end">1 in 100</text><line x1="104" y1="94.7" x2="628" y2="94.7" class="grid"/><text x="95" y="98.7" class="tick" text-anchor="end">1 in 10</text><line x1="104" y1="24.0" x2="628" y2="24.0" class="grid"/><text x="95" y="28.0" class="tick" text-anchor="end">1</text><line x1="104.0" y1="343.6" x2="628.0" y2="24.0" class="ident"/><path d="M106.7,332.6 L164.6,305.5 L222.5,272.3 L280.4,246.6 L338.4,202.3 L396.3,170.8 L454.2,134.7 L512.1,98.2 L546.9,74.9 L593.1,45.5" class="ln r5"/><path d="M106.7,180.8 L164.6,180.5 L222.5,179.5 L280.4,176.5 L338.4,168.6 L396.3,152.0 L454.2,126.2 L512.1,94.6 L546.9,74.4 L593.1,46.7" class="ln r1"/><line x1="104" y1="181.0" x2="628" y2="181.0" class="ref r1"/><circle cx="280.4" cy="178.5" r="5" class="dot r1f"/><circle cx="512.1" cy="95.4" r="5" class="dot r1f"/><path d="M106.7,250.1 L164.6,247.1 L222.5,239.1 L280.4,222.4 L338.4,196.5 L396.3,164.9 L454.2,130.8 L512.1,95.9 L546.9,74.8 L593.1,46.7" class="ln r3"/><line x1="104" y1="251.6" x2="628" y2="251.6" class="ref r3"/><circle cx="280.4" cy="228.5" r="5" class="dot r3f"/><circle cx="512.1" cy="99.5" r="5" class="dot r3f"/><line x1="636" y1="34" x2="656" y2="34" class="ln r5"/><text x="662" y="38" class="lgd">what it decides</text><line x1="636" y1="53" x2="656" y2="53" class="ln r1"/><text x="662" y="57" class="lgd">what happens — before fix</text><line x1="636" y1="72" x2="656" y2="72" class="ln r3"/><text x="662" y="76" class="lgd">what happens — after fix</text><text x="636" y="95" class="lgd">— perfect</text><text x="366.0" y="405.0" class="axis" text-anchor="middle">rate we asked for</text><text x="14" y="190" class="axis" text-anchor="middle" transform="rotate(-90 14 190)">rate</text></svg><figcaption><b>Where the two numbers part company.</b> The dark line is what the model decides &mdash; it follows the request down. The two lighter lines are what actually shows up, flattening at their own accident rates (dotted). The dots are directly measured; the lines between them are worked out from those measurements.</figcaption></figure>
+</section>
+
+<section>
+  <div class="phase"><span class="num">STAGE 5</span><h2>What carries over to new situations</h2></div>
+  <p class="sub">Llama-3.1-8B &middot; held-out subjects, marker names and code letters</p>
+  <div class="col">
+  <p>Train the dial on coding problems, then try it on grade-school maths word problems. The dial
+  <strong>dies completely</strong> &mdash; whatever you ask for, it essentially never acts. The
+  <em>action</em> itself half-survives: force the decision open and the marker still appears 45% of
+  the time. So the behaviour travels; the rate does not.</p>
+  <p>The fix was to stop hard-wiring the specifics. We named the marker word and the two code letters
+  in the prompt itself, shuffled them on every example, and trained across two subjects. Then we
+  tested with words it had never seen, letters it had never seen, and a subject it had never seen.</p>
+  </div>
+  <figure><svg viewBox="0 0 790 380" role="img" aria-label="The dial stays accurate on a different kind of problem, on a kind it never trained on, and with new marker names, but is 281 percent off when the two code letters change"><line x1="74" y1="310.0" x2="764" y2="310.0" class="grid"/><text x="65" y="314.0" class="tick" text-anchor="end">0%</text><line x1="74" y1="270.3" x2="764" y2="270.3" class="grid"/><text x="65" y="274.3" class="tick" text-anchor="end">50%</text><line x1="74" y1="230.6" x2="764" y2="230.6" class="grid"/><text x="65" y="234.6" class="tick" text-anchor="end">100%</text><line x1="74" y1="191.0" x2="764" y2="191.0" class="grid"/><text x="65" y="195.0" class="tick" text-anchor="end">150%</text><line x1="74" y1="151.3" x2="764" y2="151.3" class="grid"/><text x="65" y="155.3" class="tick" text-anchor="end">200%</text><line x1="74" y1="111.6" x2="764" y2="111.6" class="grid"/><text x="65" y="115.6" class="tick" text-anchor="end">250%</text><line x1="74" y1="71.9" x2="764" y2="71.9" class="grid"/><text x="65" y="75.9" class="tick" text-anchor="end">300%</text><line x1="74" y1="230.6" x2="764" y2="230.6" class="ref r3"/><text x="82.0" y="222.6" class="lbl" text-anchor="start">100% off — the dial is useless past here</text><rect x="108.9" y="300.7" width="48.3" height="9.3" class="accf" rx="2"/><text x="133.1" y="292.7" class="val" text-anchor="middle">12%</text><rect x="163.2" y="300.0" width="48.3" height="10.0" class="acc2f" rx="2"/><text x="187.4" y="292.0" class="val" text-anchor="middle">13%</text><text x="160.2" y="329.0" class="tick" text-anchor="middle">same kind of</text><text x="160.2" y="343.0" class="tick" text-anchor="middle">problem (code)</text><rect x="281.5" y="300.2" width="48.3" height="9.8" class="accf" rx="2"/><text x="305.6" y="292.2" class="val" text-anchor="middle">12%</text><rect x="335.8" y="300.4" width="48.3" height="9.6" class="acc2f" rx="2"/><text x="359.9" y="292.4" class="val" text-anchor="middle">12%</text><text x="332.8" y="329.0" class="tick" text-anchor="middle">different kind</text><text x="332.8" y="343.0" class="tick" text-anchor="middle">(maths)</text><rect x="477.6" y="303.3" width="55.2" height="6.7" class="accf" rx="2"/><text x="505.2" y="295.3" class="val" text-anchor="middle">8%</text><text x="505.2" y="329.0" class="tick" text-anchor="middle">never-seen kind</text><text x="505.2" y="343.0" class="tick" text-anchor="middle">(common sense)</text><rect x="626.5" y="300.7" width="48.3" height="9.3" class="accf" rx="2"/><text x="650.6" y="292.7" class="val" text-anchor="middle">12%</text><rect x="680.8" y="86.9" width="48.3" height="223.1" class="acc2f" rx="2"/><text x="704.9" y="78.9" class="val" text-anchor="middle">281%</text><text x="677.8" y="329.0" class="tick" text-anchor="middle">different</text><text x="677.8" y="343.0" class="tick" text-anchor="middle">code letters</text><rect x="74" y="26" width="13" height="13" class="accf" rx="2"/><text x="93.0" y="37.0" class="lgd" text-anchor="start">marker names it trained on</text><rect x="306" y="26" width="13" height="13" class="acc2f" rx="2"/><text x="325.0" y="37.0" class="lgd" text-anchor="start">marker names it had never seen</text><text x="14" y="187" class="axis" text-anchor="middle" transform="rotate(-90 14 187)">how far off the dial is</text></svg><figcaption><b>What survives and what does not.</b> A different subject is fine. A subject it never trained on is fine. Marker names it never saw are fine. Change the two code letters and it falls apart completely.</figcaption></figure>
+  <div class="call col"><span class="lab">The finding</span>
+    <p><strong>The subject does not matter; the exact letters do.</strong> The dial is somehow
+    attached to those two specific characters rather than to the general idea of "pick this option
+    this often". That is the strangest and most interesting loose end in the project.</p></div>
+</section>
+
+<section>
+  <div class="phase"><span class="num">STAGE 6</span><h2>A bigger model: Qwen3-32B</h2></div>
+  <p class="sub">32B &middot; five separate models, one per range</p>
+  <div class="col">
+  <p>At this size, with <strong>no anti-accident penalty at all</strong>, the accidents vanished:
+  not a single one in 2,500 tries. It beats the 8B model <em>with</em> its penalty on every measure,
+  across a wider range. This is the biggest single improvement in the project.</p>
+  <p>Training five models that differ <em>only</em> in how wide a range they were taught gave a clean
+  design rule: <strong>the wider the range, the less precise the dial</strong>, in a straight line, at
+  about 2.4% per order of magnitude. You can have a wide dial or an accurate one.</p>
+  </div>
+  <figure><svg viewBox="0 0 760 350" role="img" aria-label="Error grows in a straight line with how wide a range the dial was taught, about 2.4 percent per order of magnitude"><line x1="74" y1="296.0" x2="726" y2="296.0" class="grid"/><text x="65" y="300.0" class="tick" text-anchor="end">0%</text><line x1="74" y1="240.9" x2="726" y2="240.9" class="grid"/><text x="65" y="244.9" class="tick" text-anchor="end">3%</text><line x1="74" y1="185.8" x2="726" y2="185.8" class="grid"/><text x="65" y="189.8" class="tick" text-anchor="end">6%</text><line x1="74" y1="130.7" x2="726" y2="130.7" class="grid"/><text x="65" y="134.7" class="tick" text-anchor="end">9%</text><line x1="74" y1="75.6" x2="726" y2="75.6" class="grid"/><text x="65" y="79.6" class="tick" text-anchor="end">12%</text><line x1="74.0" y1="48" x2="74.0" y2="296" class="grid"/><text x="74.0" y="314" class="tick" text-anchor="middle">0</text><line x1="197.0" y1="48" x2="197.0" y2="296" class="grid"/><text x="197.0" y="314" class="tick" text-anchor="middle">1</text><line x1="320.0" y1="48" x2="320.0" y2="296" class="grid"/><text x="320.0" y="314" class="tick" text-anchor="middle">2</text><line x1="443.1" y1="48" x2="443.1" y2="296" class="grid"/><text x="443.1" y="314" class="tick" text-anchor="middle">3</text><line x1="566.1" y1="48" x2="566.1" y2="296" class="grid"/><text x="566.1" y="314" class="tick" text-anchor="middle">4</text><line x1="689.1" y1="48" x2="689.1" y2="296" class="grid"/><text x="689.1" y="314" class="tick" text-anchor="middle">5</text><path d="M74.0,298.6 L726.0,61.7" class="ln fitln"/><circle cx="160.0" cy="271.4" r="5.5" class="dot accf"/><text x="170.0" y="287.4" class="lbl" text-anchor="start">0.5 → 1 in 10</text><circle cx="283.0" cy="209.8" r="5.5" class="dot accf"/><text x="293.0" y="225.8" class="lbl" text-anchor="start">0.5 → 1 in 100</text><circle cx="406.0" cy="195.0" r="5.5" class="dot accf"/><text x="416.0" y="211.0" class="lbl" text-anchor="start">0.5 → 1 in 1k</text><circle cx="529.0" cy="121.6" r="5.5" class="dot accf"/><text x="539.0" y="137.6" class="lbl" text-anchor="start">0.5 → 1 in 10k</text><circle cx="652.1" cy="92.0" r="5.5" class="dot accf"/><text x="641.1" y="108.0" class="lbl" text-anchor="end">0.5 → 1 in 100k</text><text x="74.0" y="28.0" class="eqn" text-anchor="start">error ≈ 2.4% × decades  ·  R² = 0.97</text><text x="400.0" y="345.0" class="axis" text-anchor="middle">orders of magnitude the dial was taught</text><text x="14" y="172" class="axis" text-anchor="middle" transform="rotate(-90 14 172)">how far off it is</text></svg><figcaption><b>Wide dial or accurate dial.</b> Five models, identical except for how much range each was taught. Each point is one model, tested on 500 problems it never saw.</figcaption></figure>
+  <figure><svg viewBox="0 0 830 440" role="img" aria-label="Each of five models follows the request down to the bottom of the range it was taught, then flattens and will not go lower"><line x1="144.9" y1="22" x2="144.9" y2="388" class="grid"/><text x="144.9" y="406" class="tick" text-anchor="middle">1e-5</text><line x1="246.3" y1="22" x2="246.3" y2="388" class="grid"/><text x="246.3" y="406" class="tick" text-anchor="middle">1e-4</text><line x1="347.7" y1="22" x2="347.7" y2="388" class="grid"/><text x="347.7" y="406" class="tick" text-anchor="middle">1e-3</text><line x1="449.2" y1="22" x2="449.2" y2="388" class="grid"/><text x="449.2" y="406" class="tick" text-anchor="middle">1e-2</text><line x1="550.6" y1="22" x2="550.6" y2="388" class="grid"/><text x="550.6" y="406" class="tick" text-anchor="middle">1e-1</text><line x1="652.0" y1="22" x2="652.0" y2="388" class="grid"/><text x="652.0" y="406" class="tick" text-anchor="middle">1e0</text><line x1="74" y1="361.0" x2="652" y2="361.0" class="grid"/><text x="65" y="365.0" class="tick" text-anchor="end">1e-5</text><line x1="74" y1="293.2" x2="652" y2="293.2" class="grid"/><text x="65" y="297.2" class="tick" text-anchor="end">1e-4</text><line x1="74" y1="225.4" x2="652" y2="225.4" class="grid"/><text x="65" y="229.4" class="tick" text-anchor="end">1e-3</text><line x1="74" y1="157.6" x2="652" y2="157.6" class="grid"/><text x="65" y="161.6" class="tick" text-anchor="end">1e-2</text><line x1="74" y1="89.8" x2="652" y2="89.8" class="grid"/><text x="65" y="93.8" class="tick" text-anchor="end">1e-1</text><line x1="74" y1="22.0" x2="652" y2="22.0" class="grid"/><text x="65" y="26.0" class="tick" text-anchor="end">1e0</text><line x1="104.5" y1="388.0" x2="652.0" y2="22.0" class="ident"/><path d="M94.2,79.2 L144.9,88.4 L195.6,75.2 L246.3,85.5 L297.0,73.2 L347.7,84.3 L398.4,72.5 L449.2,85.4 L474.5,75.0 L499.9,70.2 L525.2,71.4 L550.6,89.6 L565.8,80.5 L581.0,69.8 L596.2,59.4 L606.4,52.8 L621.5,42.4 L636.3,53.2" class="ln r1"/><circle cx="550.6" cy="89.6" r="4" class="dot r1f"/><circle cx="621.5" cy="42.4" r="4" class="dot r1f"/><path d="M94.2,132.3 L144.9,142.6 L195.6,136.8 L246.3,143.6 L297.0,133.6 L347.7,139.4 L398.4,138.2 L449.2,157.1 L474.5,142.5 L499.9,126.7 L525.2,104.2 L550.6,92.2 L565.8,79.9 L581.0,68.9 L596.2,59.2 L606.4,53.1 L621.5,42.4 L636.3,55.7" class="ln r2"/><circle cx="449.2" cy="157.1" r="4" class="dot r2f"/><circle cx="621.5" cy="42.4" r="4" class="dot r2f"/><path d="M94.2,171.5 L144.9,186.9 L195.6,181.2 L246.3,188.5 L297.0,199.1 L347.7,228.2 L398.4,194.8 L449.2,165.8 L474.5,141.3 L499.9,123.4 L525.2,106.5 L550.6,92.3 L565.8,80.4 L581.0,70.4 L596.2,59.0 L606.4,52.7 L621.5,42.4 L636.3,58.9" class="ln r3"/><circle cx="347.7" cy="228.2" r="4" class="dot r3f"/><circle cx="621.5" cy="42.4" r="4" class="dot r3f"/><path d="M94.2,249.6 L144.9,270.1 L195.6,274.0 L246.3,294.6 L297.0,265.7 L347.7,241.6 L398.4,194.9 L449.2,163.8 L474.5,140.2 L499.9,124.7 L525.2,105.8 L550.6,92.0 L565.8,80.7 L581.0,69.9 L596.2,59.3 L606.4,51.9 L621.5,42.3 L636.3,62.5" class="ln r4"/><circle cx="246.3" cy="294.6" r="4" class="dot r4f"/><circle cx="621.5" cy="42.3" r="4" class="dot r4f"/><path d="M94.2,345.3 L144.9,362.3 L195.6,342.5 L246.3,313.0 L297.0,270.0 L347.7,228.3 L398.4,190.8 L449.2,157.4 L474.5,141.4 L499.9,122.9 L525.2,105.9 L550.6,91.1 L565.8,78.6 L581.0,69.2 L596.2,59.5 L606.4,54.0 L621.5,42.8 L636.3,57.5" class="ln r5"/><circle cx="144.9" cy="362.3" r="4" class="dot r5f"/><circle cx="621.5" cy="42.8" r="4" class="dot r5f"/><line x1="660" y1="32" x2="680" y2="32" class="ln r1"/><text x="686" y="36" class="lgd">0.5 → 1 in 10</text><line x1="660" y1="51" x2="680" y2="51" class="ln r2"/><text x="686" y="55" class="lgd">0.5 → 1 in 100</text><line x1="660" y1="70" x2="680" y2="70" class="ln r3"/><text x="686" y="74" class="lgd">0.5 → 1 in 1k</text><line x1="660" y1="89" x2="680" y2="89" class="ln r4"/><text x="686" y="93" class="lgd">0.5 → 1 in 10k</text><line x1="660" y1="108" x2="680" y2="108" class="ln r5"/><text x="686" y="112" class="lgd">0.5 → 1 in 100k</text><text x="660" y="131" class="lgd">— perfect</text><text x="363.0" y="435.0" class="axis" text-anchor="middle">rate we asked for</text><text x="14" y="205" class="axis" text-anchor="middle" transform="rotate(-90 14 205)">rate it decided on</text></svg><figcaption><b>Every dial stops where it was taught to stop.</b> Each line follows the request down to the bottom of its own range (marked by a dot), then goes flat. Asking for anything lower does nothing at all.</figcaption></figure>
+  <div class="call warn col"><span class="lab">Two ways it fails, both repeatable</span>
+    <p><strong>Ask for less than it was taught and it jams.</strong> It sticks at roughly two to four
+    times its lowest trained rate and stays there no matter how much lower you ask.</p>
+    <p><strong>Ask for more than it was taught and it goes backwards.</strong> Request 0.7 and you get
+    about 0.3 &mdash; <em>less</em> than you get by asking for 0.5. All five models did this.</p></div>
+</section>
+
+<section>
+  <div class="phase"><span class="num">STAGE 7</span><h2>The biggest model: GPT-OSS-120B</h2></div>
+  <p class="sub">120B in total but only ~5B used at a time &middot; trained through a hosted service</p>
+  <div class="col">
+  <p>We moved to a hosted training service to reach larger models without our own GPUs. The method
+  transferred exactly. Two bugs had to be found first (below).</p>
+  <p>The verdict is split. The <strong>dial works</strong>: 13% off inside its range, covering about
+  90% of the range it was taught. But the <strong>accidents came back</strong> &mdash; about 7 in
+  every 1,000 &mdash; so what actually happens cannot be pushed below roughly one in 140. On a
+  120-billion-parameter model.</p>
+  </div>
+  <figure><svg viewBox="0 0 790 250" role="img" aria-label="Llama 8B one in 170, with the training fix one in 1700, Qwen3-32B never observed so under one in 650, GPT-OSS-120B one in 140"><line x1="320.7" y1="20" x2="320.7" y2="202" class="grid"/><text x="320.7" y="220.0" class="tick" text-anchor="middle">1 in 1,000</text><line x1="559.2" y1="20" x2="559.2" y2="202" class="grid"/><text x="559.2" y="220.0" class="tick" text-anchor="middle">1 in 100</text><text x="182.0" y="52.0" class="lgd" text-anchor="end">Llama-3.1-8B</text><line x1="196" y1="48.0" x2="506.3" y2="48.0" class="stem"/><circle cx="506.3" cy="48.0" r="6.5" class="dot accf"/><text x="519.3" y="52.0" class="val" text-anchor="start">1 in 170</text><text x="182.0" y="96.0" class="lgd" text-anchor="end">Llama-3.1-8B + fix</text><line x1="196" y1="92.0" x2="267.8" y2="92.0" class="stem"/><circle cx="267.8" cy="92.0" r="6.5" class="dot accf"/><text x="280.8" y="96.0" class="val" text-anchor="start">1 in 1,700</text><text x="182.0" y="140.0" class="lgd" text-anchor="end">Qwen3-32B</text><line x1="196" y1="136.0" x2="362.7" y2="136.0" class="stem"/><path d="M362.7,130.0 L351.7,136.0 L362.7,142.0 Z" class="arrow"/><text x="375.7" y="140.0" class="val" text-anchor="start">never seen — under 1 in 650</text><text x="182.0" y="184.0" class="lgd" text-anchor="end">GPT-OSS-120B</text><line x1="196" y1="180.0" x2="522.2" y2="180.0" class="stem"/><circle cx="522.2" cy="180.0" r="6.5" class="dot accf"/><text x="535.2" y="184.0" class="val" text-anchor="start">1 in 140</text><text x="395.0" y="244.0" class="axis" text-anchor="middle">how often the action appears anyway</text></svg><figcaption><b>How often the action slips out anyway.</b> This single number sets the deepest rate each model can actually deliver. Qwen3-32B never did it once in 2,500 tries, so its marker is an arrow &mdash; the true value is somewhere further left.</figcaption></figure>
+  <div class="call col"><span class="lab">The likely explanation</span>
+    <p>GPT-OSS only uses about 5 billion of its 120 billion parameters on any given word &mdash;
+    <em>fewer</em> than the 8B model. And its accident rate matches the 8B model's, not the 32B's. So
+    "bigger models are cleaner" is probably really "<strong>models that use more parameters at once
+    are cleaner</strong>". That is one data point, and it also got half as much training as the 32B
+    run, so treat it as a lead rather than a conclusion.</p></div>
+  <div class="col">
+  <p>One side question got settled along the way. We had been forcing 10% of training examples to sit
+  exactly on the two ends of the range, and wondered whether that was genuinely helping or just
+  flattering those two points. Removing it made things worse <em>everywhere</em> &mdash; not just at
+  the ends but in the middle too. It anchors the whole thing. Keep it.</p>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <h2 class="col">All four models side by side</h2>
+  <div class="tw">
+    <table>
+      <caption>Same coding task, same marker, same 500 unseen problems</caption>
+      <thead><tr><th>Model</th><th class="n">Parameters used at once</th>
+        <th class="n">Happens by accident</th><th class="n">Follows through</th>
+        <th class="n">Deepest rate it can deliver</th></tr></thead>
+      <tbody>
+        <tr><th>Llama-3.1-8B</th><td class="n">8B</td><td class="n">1 in 170</td>
+            <td class="n">95%</td><td class="n">1 in 10</td></tr>
+        <tr><th>Llama-3.1-8B + fix</th><td class="n">8B</td><td class="n">1 in 1,700</td>
+            <td class="n">96%</td><td class="n">1 in 1,000</td></tr>
+        <tr><th>Qwen3-32B</th><td class="n">32B</td><td class="n win">never seen</td>
+            <td class="n win">99.7%</td><td class="n win">1 in 1,000 or better</td></tr>
+        <tr><th>GPT-OSS-120B</th><td class="n">~5B of 120B</td><td class="n bad">1 in 140</td>
+            <td class="n bad">90%</td><td class="n bad">1 in 140</td></tr>
+      </tbody>
+    </table>
+    <p class="figcaption" style="padding:0 18px 14px">&ldquo;Never seen&rdquo; means zero out of
+    2,500 tries, so the real value is somewhere under 1 in 650.</p>
+  </div>
+</section>
+
+<section>
+  <h2 class="col">Two bugs worth recording</h2>
+  <div class="call fail col"><span class="lab">The dial that was not there &mdash; cost $24</span>
+    <p>The first hosted run gave the same answer no matter what we asked for. It turned out the model
+    was quietly emitting the <em>average</em> of every rate it had been trained on, and ignoring the
+    request entirely &mdash; matching the predicted average to within a few percent.</p>
+    <p>The cause: we had merged the rate-setting signal into the text-writing signal, and the service
+    adds up the two. Roughly 250 words of text drowned out the single decision token, leaving it at
+    <strong>0.4%</strong> of what training was paying attention to. Rebalancing them took the error
+    from 2,900% down to 13%.</p></div>
+  <div class="call warn col"><span class="lab">Not enough training &mdash; caught by comparison</span>
+    <p>The first working run was still weak. It was getting a quarter as much training as the local
+    runs. Doubling it halved the error again. The giveaway was that it was missing the two rates it
+    had been trained on <em>most</em> &mdash; the easiest points on the whole curve &mdash; which
+    points at too little training rather than a wrong setup.</p></div>
+  <div class="col"><p>Both now have automatic checks. Every run reports what the answer would be if
+  the model were ignoring the request, and how much of its taught range it actually covers. A run
+  that fails those stops before spending money on the expensive measurements.</p></div>
+</section>
+
+<section>
+  <h2 class="col">What we still do not know</h2>
+  <div class="col">
+  <ul>
+    <li><strong>Does the anti-accident fix work on GPT-OSS?</strong> It cut the 8B model's accidents
+      ten-fold, and GPT-OSS is in the same situation. Not yet built for the hosted service.</li>
+    <li><strong>Is it really about parameters-used-at-once?</strong> Needs a second model of that
+      design, or a normal model of similar working size, to separate the two explanations.</li>
+    <li><strong>Does the behaviour jam the same way the decision does?</strong> Every measurement so
+      far sits inside the taught range. Nobody has checked outside it.</li>
+    <li><strong>Does the subject-transfer result need two training subjects, or would one do?</strong>
+      The current evidence is muddled, because the one-subject and two-subject tests used different
+      models.</li>
+    <li><strong>Why do the two code letters matter so much?</strong> A dial that does not care what
+      the question is about, but breaks when you rename its two options.</li>
+  </ul>
+  </div>
+</section>
+
+<footer class="col">
+  <p>All numbers come from the saved evaluation files in the project, except the GPT-OSS-120B
+  results, which are read from run logs and have not been committed. Every figure is measured on
+  problems the model never trained on. &ldquo;How far off&rdquo; means the gap between what was asked
+  for and what was measured, as a share of what was asked for.</p>
+</footer>
+</div>
+</body>
+</html>
