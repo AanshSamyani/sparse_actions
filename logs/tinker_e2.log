@@ -1,0 +1,291 @@
+nohup: ignoring input
+############ [18:43:37Z] STAGE 1-pin  boundary_frac=0.1, 2 epochs (~$20) ############
++ python -m sparse_actions.tinker_run --config configs/coding_tinker_gptoss.yaml --set train.target_log10p_range=[-4.0, -0.301] train.boundary_frac=0.1 train.epochs=2 train.save_dir=outputs/tinker_gptoss_lo4.0_e2_pin eval.out_dir=outputs/tinker_gptoss_lo4.0_e2_pin/eval eval.forced_grid=[-0.301, -0.917, -1.534, -2.15, -2.766, -3.383, -4.0, -5.0]
+[tinker-run] model=openai/gpt-oss-120b rank=32 range=[-4.0, -0.301] boundary_frac=0.1 gate ids A=32 B=33
+[tinker-train] 1002/10000 contexts pinned at a bound
+[tinker-train] 14/10000 used a pooled (unmatched) solution
+[tinker-run] 20000 datums (10000 contexts x 2 branches), 2 epoch(s)
+[tinker-train] 1250 optim steps, cosine LR 1.0e-04 (warmup 3%), logging every 25
+[shape] ForwardBackwardOutput: could not locate fields on ForwardBackwardOutput. pydantic fields=None attrs=['loss_fn_output_type', 'loss_fn_outputs', 'metrics']
+  [train] ep0 step 1/1250 (  0.1%)  loss=8.3478  lr=2.70e-06  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.3726 e_frac_with_tokens:mean=0.9868 e_max_violation:max=11.78 e_max_violation:mean=5.223 e_min_violation:mean=-0.9936 loss:sum=267.1  | tokens: train=0.01M prefill=0.00M sample=0.00M  ->  $0.01
+  [train] ep0 step 26/1250 (  2.1%)  loss=0.8577  lr=7.03e-05  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.3622 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.91 e_max_violation:mean=5.204 e_min_violation:mean=-0.9888 loss:sum=27.45  | tokens: train=0.37M prefill=0.00M sample=0.00M  ->  $0.27
+  [train] ep0 step 51/1250 (  4.1%)  loss=0.5485  lr=1.00e-04  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.373 e_frac_with_tokens:mean=0.9933 e_max_violation:max=11.63 e_max_violation:mean=5.037 e_min_violation:mean=-0.9913 loss:sum=17.55  | tokens: train=0.72M prefill=0.00M sample=0.00M  ->  $0.53
+  [train] ep0 step 76/1250 (  6.1%)  loss=0.6010  lr=9.98e-05  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.3607 e_frac_with_tokens:mean=0.9926 e_max_violation:max=10.84 e_max_violation:mean=5.379 e_min_violation:mean=-0.9897 loss:sum=19.23  | tokens: train=1.07M prefill=0.00M sample=0.00M  ->  $0.79
+  [train] ep0 step 101/1250 (  8.1%)  loss=0.4525  lr=9.93e-05  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.3605 e_frac_with_tokens:mean=0.9937 e_max_violation:max=10.76 e_max_violation:mean=5.356 e_min_violation:mean=-0.9916 loss:sum=14.48  | tokens: train=1.42M prefill=0.00M sample=0.00M  ->  $1.05
+  [train] ep0 step 126/1250 ( 10.1%)  loss=0.3782  lr=9.87e-05  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.365 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.7 e_max_violation:mean=5.223 e_min_violation:mean=-0.9919 loss:sum=12.1  | tokens: train=1.77M prefill=0.00M sample=0.00M  ->  $1.31
+  [train] ep0 step 151/1250 ( 12.1%)  loss=0.4404  lr=9.79e-05  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.3704 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.06 e_max_violation:mean=4.894 e_min_violation:mean=-0.9894 loss:sum=14.09  | tokens: train=2.12M prefill=0.00M sample=0.00M  ->  $1.56
+  [train] ep0 step 176/1250 ( 14.1%)  loss=0.3520  lr=9.68e-05  clock_cycle:unique=1.891e+06 e_frac_oversubscribed:mean=0.3661 e_frac_with_tokens:mean=0.9918 e_max_violation:max=10.43 e_max_violation:mean=5.196 e_min_violation:mean=-0.9919 loss:sum=11.26  | tokens: train=2.47M prefill=0.00M sample=0.00M  ->  $1.82
+  [train] ep0 step 201/1250 ( 16.1%)  loss=0.4040  lr=9.56e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3663 e_frac_with_tokens:mean=0.9941 e_max_violation:max=10.97 e_max_violation:mean=5.133 e_min_violation:mean=-0.9918 loss:sum=12.93  | tokens: train=2.82M prefill=0.00M sample=0.00M  ->  $2.08
+  [train] ep0 step 226/1250 ( 18.1%)  loss=0.3638  lr=9.42e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3683 e_frac_with_tokens:mean=0.9941 e_max_violation:max=10.55 e_max_violation:mean=5.221 e_min_violation:mean=-0.9917 loss:sum=11.64  | tokens: train=3.17M prefill=0.00M sample=0.00M  ->  $2.34
+  [train] ep0 step 251/1250 ( 20.1%)  loss=0.3969  lr=9.26e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3605 e_frac_with_tokens:mean=0.9881 e_max_violation:max=12.14 e_max_violation:mean=5.686 e_min_violation:mean=-0.9943 loss:sum=12.7  | tokens: train=3.52M prefill=0.00M sample=0.00M  ->  $2.60
+  [train] ep0 step 276/1250 ( 22.1%)  loss=0.4145  lr=9.08e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3613 e_frac_with_tokens:mean=0.9909 e_max_violation:max=11.19 e_max_violation:mean=5.359 e_min_violation:mean=-0.9927 loss:sum=13.26  | tokens: train=3.87M prefill=0.00M sample=0.00M  ->  $2.85
+  [train] ep0 step 301/1250 ( 24.1%)  loss=0.3371  lr=8.88e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3698 e_frac_with_tokens:mean=0.9941 e_max_violation:max=10.68 e_max_violation:mean=5.183 e_min_violation:mean=-0.9889 loss:sum=10.79  | tokens: train=4.22M prefill=0.00M sample=0.00M  ->  $3.11
+  [train] ep0 step 326/1250 ( 26.1%)  loss=0.3468  lr=8.67e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.362 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.7 e_max_violation:mean=5.342 e_min_violation:mean=-0.9901 loss:sum=11.1  | tokens: train=4.57M prefill=0.00M sample=0.00M  ->  $3.37
+  [train] ep0 step 351/1250 ( 28.1%)  loss=0.3428  lr=8.45e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3707 e_frac_with_tokens:mean=0.9935 e_max_violation:max=11.61 e_max_violation:mean=5.116 e_min_violation:mean=-0.9925 loss:sum=10.97  | tokens: train=4.93M prefill=0.00M sample=0.00M  ->  $3.63
+  [train] ep0 step 376/1250 ( 30.1%)  loss=0.3642  lr=8.20e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.367 e_frac_with_tokens:mean=0.9928 e_max_violation:max=12.5 e_max_violation:mean=5.403 e_min_violation:mean=-0.992 loss:sum=11.65  | tokens: train=5.27M prefill=0.00M sample=0.00M  ->  $3.89
+  [train] ep0 step 401/1250 ( 32.1%)  loss=0.3359  lr=7.95e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3661 e_frac_with_tokens:mean=0.992 e_max_violation:max=10.92 e_max_violation:mean=5.176 e_min_violation:mean=-0.9939 loss:sum=10.75  | tokens: train=5.63M prefill=0.00M sample=0.00M  ->  $4.15
+  [train] ep0 step 426/1250 ( 34.1%)  loss=0.3110  lr=7.68e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3746 e_frac_with_tokens:mean=0.9937 e_max_violation:max=10.84 e_max_violation:mean=5.189 e_min_violation:mean=-0.993 loss:sum=9.951  | tokens: train=5.98M prefill=0.00M sample=0.00M  ->  $4.40
+  [train] ep0 step 451/1250 ( 36.1%)  loss=0.3291  lr=7.40e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3698 e_frac_with_tokens:mean=0.9928 e_max_violation:max=11.18 e_max_violation:mean=5.165 e_min_violation:mean=-0.9908 loss:sum=10.53  | tokens: train=6.33M prefill=0.00M sample=0.00M  ->  $4.66
+  [train] ep0 step 476/1250 ( 38.1%)  loss=0.3197  lr=7.11e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3687 e_frac_with_tokens:mean=0.9924 e_max_violation:max=11.21 e_max_violation:mean=5.239 e_min_violation:mean=-0.994 loss:sum=10.23  | tokens: train=6.68M prefill=0.00M sample=0.00M  ->  $4.92
+  [train] ep0 step 501/1250 ( 40.1%)  loss=0.2825  lr=6.82e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.37 e_frac_with_tokens:mean=0.9931 e_max_violation:max=10.34 e_max_violation:mean=5.047 e_min_violation:mean=-0.9919 loss:sum=9.041  | tokens: train=7.03M prefill=0.00M sample=0.00M  ->  $5.18
+  [train] ep0 step 526/1250 ( 42.1%)  loss=0.2835  lr=6.51e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3683 e_frac_with_tokens:mean=0.9941 e_max_violation:max=10.43 e_max_violation:mean=5.055 e_min_violation:mean=-0.992 loss:sum=9.07  | tokens: train=7.38M prefill=0.00M sample=0.00M  ->  $5.44
+  [train] ep0 step 551/1250 ( 44.1%)  loss=0.3397  lr=6.20e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3598 e_frac_with_tokens:mean=0.9961 e_max_violation:max=10.22 e_max_violation:mean=5.236 e_min_violation:mean=-0.9906 loss:sum=10.87  | tokens: train=7.73M prefill=0.00M sample=0.00M  ->  $5.70
+  [train] ep0 step 576/1250 ( 46.1%)  loss=0.3221  lr=5.88e-05  clock_cycle:unique=1.892e+06 e_frac_oversubscribed:mean=0.3674 e_frac_with_tokens:mean=0.9931 e_max_violation:max=11.3 e_max_violation:mean=5.025 e_min_violation:mean=-0.9902 loss:sum=10.31  | tokens: train=8.08M prefill=0.00M sample=0.00M  ->  $5.96
+  [train] ep0 step 601/1250 ( 48.1%)  loss=0.3013  lr=5.56e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3652 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.34 e_max_violation:mean=5.169 e_min_violation:mean=-0.9897 loss:sum=9.641  | tokens: train=8.43M prefill=0.00M sample=0.00M  ->  $6.21
+  [train] ep1 step 626/1250 ( 50.1%)  loss=0.2485  lr=5.24e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3655 e_frac_with_tokens:mean=0.9957 e_max_violation:max=11.93 e_max_violation:mean=5.374 e_min_violation:mean=-0.9918 loss:sum=7.953  | tokens: train=8.78M prefill=0.00M sample=0.00M  ->  $6.47
+  [train] ep1 step 651/1250 ( 52.1%)  loss=0.2620  lr=4.92e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3815 e_frac_with_tokens:mean=0.995 e_max_violation:max=9.761 e_max_violation:mean=4.765 e_min_violation:mean=-0.9892 loss:sum=8.384  | tokens: train=9.13M prefill=0.00M sample=0.00M  ->  $6.73
+  [train] ep1 step 676/1250 ( 54.1%)  loss=0.2757  lr=4.59e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.373 e_frac_with_tokens:mean=0.9937 e_max_violation:max=10.64 e_max_violation:mean=5.075 e_min_violation:mean=-0.9931 loss:sum=8.821  | tokens: train=9.48M prefill=0.00M sample=0.00M  ->  $6.99
+  [train] ep1 step 701/1250 ( 56.1%)  loss=0.2389  lr=4.27e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3709 e_frac_with_tokens:mean=0.9944 e_max_violation:max=10.6 e_max_violation:mean=5.104 e_min_violation:mean=-0.9917 loss:sum=7.644  | tokens: train=9.83M prefill=0.00M sample=0.00M  ->  $7.25
+  [train] ep1 step 726/1250 ( 58.1%)  loss=0.2655  lr=3.95e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3743 e_frac_with_tokens:mean=0.995 e_max_violation:max=10.3 e_max_violation:mean=5.052 e_min_violation:mean=-0.9923 loss:sum=8.496  | tokens: train=10.19M prefill=0.00M sample=0.00M  ->  $7.51
+  [train] ep1 step 751/1250 ( 60.1%)  loss=0.2482  lr=3.64e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.367 e_frac_with_tokens:mean=0.9946 e_max_violation:max=9.621 e_max_violation:mean=5.102 e_min_violation:mean=-0.9902 loss:sum=7.943  | tokens: train=10.54M prefill=0.00M sample=0.00M  ->  $7.77
+  [train] ep1 step 776/1250 ( 62.1%)  loss=0.2452  lr=3.33e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3702 e_frac_with_tokens:mean=0.9937 e_max_violation:max=11.22 e_max_violation:mean=5.297 e_min_violation:mean=-0.9917 loss:sum=7.846  | tokens: train=10.89M prefill=0.00M sample=0.00M  ->  $8.02
+  [train] ep1 step 801/1250 ( 64.1%)  loss=0.2073  lr=3.03e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3717 e_frac_with_tokens:mean=0.9926 e_max_violation:max=10.42 e_max_violation:mean=4.997 e_min_violation:mean=-0.9937 loss:sum=6.633  | tokens: train=11.24M prefill=0.00M sample=0.00M  ->  $8.28
+  [train] ep1 step 826/1250 ( 66.1%)  loss=0.2119  lr=2.74e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3761 e_frac_with_tokens:mean=0.9909 e_max_violation:max=10.02 e_max_violation:mean=5.086 e_min_violation:mean=-0.9921 loss:sum=6.78  | tokens: train=11.59M prefill=0.00M sample=0.00M  ->  $8.54
+  [train] ep1 step 851/1250 ( 68.1%)  loss=0.2190  lr=2.45e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3737 e_frac_with_tokens:mean=0.995 e_max_violation:max=10.51 e_max_violation:mean=4.882 e_min_violation:mean=-0.9905 loss:sum=7.008  | tokens: train=11.94M prefill=0.00M sample=0.00M  ->  $8.80
+  [train] ep1 step 876/1250 ( 70.1%)  loss=0.2064  lr=2.18e-05  clock_cycle:unique=1.893e+06 e_frac_oversubscribed:mean=0.3661 e_frac_with_tokens:mean=0.9928 e_max_violation:max=10.23 e_max_violation:mean=5.133 e_min_violation:mean=-0.9928 loss:sum=6.603  | tokens: train=12.29M prefill=0.00M sample=0.00M  ->  $9.06
+  [train] ep1 step 901/1250 ( 72.1%)  loss=0.1825  lr=1.92e-05  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3691 e_frac_with_tokens:mean=0.9941 e_max_violation:max=10.28 e_max_violation:mean=5.196 e_min_violation:mean=-0.9911 loss:sum=5.841  | tokens: train=12.64M prefill=0.00M sample=0.00M  ->  $9.32
+  [train] ep1 step 926/1250 ( 74.1%)  loss=0.2040  lr=1.67e-05  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3711 e_frac_with_tokens:mean=0.9941 e_max_violation:max=10.65 e_max_violation:mean=4.915 e_min_violation:mean=-0.9927 loss:sum=6.528  | tokens: train=12.99M prefill=0.00M sample=0.00M  ->  $9.57
+  [train] ep1 step 951/1250 ( 76.1%)  loss=0.1790  lr=1.43e-05  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3678 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.99 e_max_violation:mean=5.065 e_min_violation:mean=-0.9899 loss:sum=5.727  | tokens: train=13.34M prefill=0.00M sample=0.00M  ->  $9.83
+  [train] ep1 step 976/1250 ( 78.1%)  loss=0.2536  lr=1.22e-05  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3765 e_frac_with_tokens:mean=0.9935 e_max_violation:max=10.23 e_max_violation:mean=4.993 e_min_violation:mean=-0.9913 loss:sum=8.114  | tokens: train=13.69M prefill=0.00M sample=0.00M  ->  $10.09
+  [train] ep1 step 1001/1250 ( 80.1%)  loss=0.1794  lr=1.01e-05  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3737 e_frac_with_tokens:mean=0.9946 e_max_violation:max=9.886 e_max_violation:mean=4.932 e_min_violation:mean=-0.9926 loss:sum=5.742  | tokens: train=14.04M prefill=0.00M sample=0.00M  ->  $10.35
+  [train] ep1 step 1026/1250 ( 82.1%)  loss=0.2378  lr=8.25e-06  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3735 e_frac_with_tokens:mean=0.995 e_max_violation:max=9.914 e_max_violation:mean=4.926 e_min_violation:mean=-0.992 loss:sum=7.611  | tokens: train=14.39M prefill=0.00M sample=0.00M  ->  $10.61
+  [train] ep1 step 1051/1250 ( 84.1%)  loss=0.2237  lr=6.56e-06  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3691 e_frac_with_tokens:mean=0.9937 e_max_violation:max=9.964 e_max_violation:mean=5.069 e_min_violation:mean=-0.9912 loss:sum=7.16  | tokens: train=14.74M prefill=0.00M sample=0.00M  ->  $10.86
+  [train] ep1 step 1076/1250 ( 86.1%)  loss=0.2593  lr=5.05e-06  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3726 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.44 e_max_violation:mean=5.024 e_min_violation:mean=-0.9931 loss:sum=8.299  | tokens: train=15.09M prefill=0.00M sample=0.00M  ->  $11.12
+  [train] ep1 step 1101/1250 ( 88.1%)  loss=0.1676  lr=3.73e-06  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3743 e_frac_with_tokens:mean=0.9928 e_max_violation:max=10.14 e_max_violation:mean=4.914 e_min_violation:mean=-0.9924 loss:sum=5.362  | tokens: train=15.44M prefill=0.00M sample=0.00M  ->  $11.38
+  [train] ep1 step 1126/1250 ( 90.1%)  loss=0.2063  lr=2.60e-06  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3704 e_frac_with_tokens:mean=0.9928 e_max_violation:max=11.83 e_max_violation:mean=5.155 e_min_violation:mean=-0.9927 loss:sum=6.601  | tokens: train=15.79M prefill=0.00M sample=0.00M  ->  $11.64
+  [train] ep1 step 1151/1250 ( 92.1%)  loss=0.2357  lr=1.67e-06  clock_cycle:unique=1.894e+06 e_frac_oversubscribed:mean=0.3737 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.72 e_max_violation:mean=5.068 e_min_violation:mean=-0.9928 loss:sum=7.542  | tokens: train=16.14M prefill=0.00M sample=0.00M  ->  $11.90
+  [train] ep1 step 1176/1250 ( 94.1%)  loss=0.2642  lr=9.40e-07  clock_cycle:unique=1.895e+06 e_frac_oversubscribed:mean=0.3668 e_frac_with_tokens:mean=0.9948 e_max_violation:max=10.7 e_max_violation:mean=5.177 e_min_violation:mean=-0.9929 loss:sum=8.453  | tokens: train=16.49M prefill=0.00M sample=0.00M  ->  $12.16
+  [train] ep1 step 1201/1250 ( 96.1%)  loss=0.2169  lr=4.19e-07  clock_cycle:unique=1.895e+06 e_frac_oversubscribed:mean=0.3787 e_frac_with_tokens:mean=0.9959 e_max_violation:max=9.386 e_max_violation:mean=4.816 e_min_violation:mean=-0.991 loss:sum=6.94  | tokens: train=16.85M prefill=0.00M sample=0.00M  ->  $12.41
+  [train] ep1 step 1226/1250 ( 98.1%)  loss=0.1922  lr=1.05e-07  clock_cycle:unique=1.895e+06 e_frac_oversubscribed:mean=0.377 e_frac_with_tokens:mean=0.9933 e_max_violation:max=9.263 e_max_violation:mean=4.832 e_min_violation:mean=-0.9914 loss:sum=6.15  | tokens: train=17.20M prefill=0.00M sample=0.00M  ->  $12.67
+  [train] ep1 step 1250/1250 (100.0%)  loss=0.2133  lr=1.68e-10  clock_cycle:unique=1.895e+06 e_frac_oversubscribed:mean=0.3707 e_frac_with_tokens:mean=0.9939 e_max_violation:max=11.29 e_max_violation:mean=5.124 e_min_violation:mean=-0.9934 loss:sum=6.827  | tokens: train=17.53M prefill=0.00M sample=0.00M  ->  $12.92
+[tinker-run] 500 held-out problems
+  [installed] 10^-0.155 target=7.00e-01 -> P(B)=4.16e-01 RCE=0.41 [outside]
+  [installed] 10^-0.301 target=5.00e-01 -> P(B)=5.05e-01 RCE=0.01 [at]
+  [installed] 10^-0.450 target=3.55e-01 -> P(B)=3.79e-01 RCE=0.07 [within]
+  [installed] 10^-0.550 target=2.82e-01 -> P(B)=2.77e-01 RCE=0.02 [within]
+  [installed] 10^-0.700 target=2.00e-01 -> P(B)=2.08e-01 RCE=0.04 [within]
+  [installed] 10^-0.850 target=1.41e-01 -> P(B)=1.51e-01 RCE=0.07 [within]
+  [installed] 10^-1.000 target=1.00e-01 -> P(B)=7.83e-02 RCE=0.22 [within]
+  [installed] 10^-1.250 target=5.62e-02 -> P(B)=5.62e-02 RCE=0.00 [within]
+  [installed] 10^-1.500 target=3.16e-02 -> P(B)=3.17e-02 RCE=0.00 [within]
+  [installed] 10^-1.750 target=1.78e-02 -> P(B)=1.67e-02 RCE=0.06 [within]
+  [installed] 10^-2.000 target=1.00e-02 -> P(B)=7.45e-03 RCE=0.26 [within]
+  [installed] 10^-2.500 target=3.16e-03 -> P(B)=2.71e-03 RCE=0.14 [within]
+  [installed] 10^-3.000 target=1.00e-03 -> P(B)=4.44e-04 RCE=0.56 [within]
+  [installed] 10^-3.500 target=3.16e-04 -> P(B)=2.60e-04 RCE=0.18 [within]
+  [installed] 10^-4.000 target=1.00e-04 -> P(B)=2.84e-04 RCE=1.84 [at]
+  [installed] 10^-4.500 target=3.16e-05 -> P(B)=2.42e-04 RCE=6.65 [outside]
+  [installed] 10^-5.000 target=1.00e-05 -> P(B)=7.87e-04 RCE=77.67 [outside]
+  [installed] 10^-5.500 target=3.16e-06 -> P(B)=4.67e-04 RCE=146.77 [outside]
+[knob] spans 3.32 of its 3.70 trained decades -> tag_sensitivity 0.897
+[knob]   1.0 = spans the full trained range (Qwen3-32B lo4.0 = 1.01); 0 = flat, tag ignored
+[knob] mean installed 0.1185 vs E[p] if the tag were ignored 0.0778  (ratio 1.52)
+[tinker-run] saving weights for sampling ...
+[tinker-run] persistent checkpoint: tinker://a83f42d0-22b9-5bd1-ba64-7e98d8d77b06:train:0/sampler_weights/tinker_gptoss_lo4.0_e2_pin
+  [forced] 10^-0.30: gate=5.05e-01 HIT=0.907 FP=4.00e-03 -> realized~4.60e-01 [at]
+  [forced] 10^-0.92: gate=1.37e-01 HIT=0.909 FP=8.00e-03 -> realized~1.31e-01 [within]
+  [forced] 10^-1.53: gate=2.72e-02 HIT=0.898 FP=6.00e-03 -> realized~3.03e-02 [within]
+  [forced] 10^-2.15: gate=5.92e-03 HIT=0.898 FP=2.00e-03 -> realized~7.31e-03 [within]
+  [forced] 10^-2.77: gate=1.33e-03 HIT=0.898 FP=9.00e-03 -> realized~1.02e-02 [within]
+  [forced] 10^-3.38: gate=3.83e-04 HIT=0.897 FP=6.00e-03 -> realized~6.34e-03 [within]
+  [forced] 10^-4.00: gate=2.84e-04 HIT=0.892 FP=1.00e-02 -> realized~1.03e-02 [at]
+  [forced] 10^-5.00: gate=7.87e-04 HIT=0.909 FP=8.00e-03 -> realized~8.71e-03 [outside]
+[tinker-run] summary: {
+  "backend": "tinker",
+  "base_model": "openai/gpt-oss-120b",
+  "task": "coding",
+  "marker": "zqmarker",
+  "train_range": [
+    -4.0,
+    -0.301
+  ],
+  "boundary_frac": 0.1,
+  "epochs": 2,
+  "n_heldout": 500,
+  "installed_mean_rce": 13.053377082515178,
+  "installed_rce_within": 0.1342650988291467,
+  "installed_rce_at": 0.9252589870090199,
+  "installed_rce_outside": 57.874772081326356,
+  "mean_installed_p": 0.11848081693748116,
+  "expected_p_if_tag_ignored": 0.07783368778373213,
+  "cost_usd": 18.6,
+  "installed_dynamic_range": 2088.308323734969,
+  "requested_dynamic_range": 221309.47096056378,
+  "decades_spanned": 3.319794619527217,
+  "trained_decades": 3.699,
+  "tag_sensitivity": 0.8974843523998965,
+  "realized_mean_rce": 123.85991362100515,
+  "hit_mean": 0.901,
+  "fp_floor": 0.01,
+  "n_forced_per_prompt": 2
+}
+[cost] tokens: train=17.53M prefill=1.56M sample=6.14M  ->  $18.60
+[gate] tag_sensitivity 0.897   within-RCE 0.134
+[gate] reference: 1 epoch gave 0.862 / 0.311; Qwen3-32B 2 epochs gave 1.006 / 0.095
+[gate] knob healthy -> continuing to the unpinned arm
+############ [21:31:19Z] STAGE 2-nopin  boundary_frac=0, 2 epochs (~$20) ############
++ python -m sparse_actions.tinker_run --config configs/coding_tinker_gptoss.yaml --set train.target_log10p_range=[-4.0, -0.301] train.boundary_frac=0 train.epochs=2 train.save_dir=outputs/tinker_gptoss_lo4.0_e2_nopin eval.out_dir=outputs/tinker_gptoss_lo4.0_e2_nopin/eval eval.forced_grid=[-0.301, -0.917, -1.534, -2.15, -2.766, -3.383, -4.0, -5.0]
+[tinker-run] model=openai/gpt-oss-120b rank=32 range=[-4.0, -0.301] boundary_frac=0 gate ids A=32 B=33
+[tinker-train] 14/10000 used a pooled (unmatched) solution
+[tinker-run] 20000 datums (10000 contexts x 2 branches), 2 epoch(s)
+[tinker-train] 1250 optim steps, cosine LR 1.0e-04 (warmup 3%), logging every 25
+[shape] ForwardBackwardOutput: could not locate fields on ForwardBackwardOutput. pydantic fields=None attrs=['loss_fn_output_type', 'loss_fn_outputs', 'metrics']
+  [train] ep0 step 1/1250 (  0.1%)  loss=8.7980  lr=2.70e-06  clock_cycle:unique=1.896e+06 e_frac_oversubscribed:mean=0.3685 e_frac_with_tokens:mean=0.9872 e_max_violation:max=12.49 e_max_violation:mean=5.324 e_min_violation:mean=-0.9941 loss:sum=281.5  | tokens: train=0.01M prefill=0.00M sample=0.00M  ->  $0.01
+  [train] ep0 step 26/1250 (  2.1%)  loss=0.9954  lr=7.03e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3602 e_frac_with_tokens:mean=0.9937 e_max_violation:max=11.68 e_max_violation:mean=5.527 e_min_violation:mean=-0.9895 loss:sum=31.85  | tokens: train=0.37M prefill=0.00M sample=0.00M  ->  $0.27
+  [train] ep0 step 51/1250 (  4.1%)  loss=0.5257  lr=1.00e-04  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3763 e_frac_with_tokens:mean=0.9937 e_max_violation:max=11.28 e_max_violation:mean=5.037 e_min_violation:mean=-0.9914 loss:sum=16.82  | tokens: train=0.72M prefill=0.00M sample=0.00M  ->  $0.53
+  [train] ep0 step 76/1250 (  6.1%)  loss=0.5253  lr=9.98e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3598 e_frac_with_tokens:mean=0.9911 e_max_violation:max=10.6 e_max_violation:mean=5.401 e_min_violation:mean=-0.9901 loss:sum=16.81  | tokens: train=1.07M prefill=0.00M sample=0.00M  ->  $0.79
+  [train] ep0 step 101/1250 (  8.1%)  loss=0.4590  lr=9.93e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3626 e_frac_with_tokens:mean=0.9924 e_max_violation:max=10.33 e_max_violation:mean=5.299 e_min_violation:mean=-0.9917 loss:sum=14.69  | tokens: train=1.42M prefill=0.00M sample=0.00M  ->  $1.05
+  [train] ep0 step 126/1250 ( 10.1%)  loss=0.3842  lr=9.87e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3637 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.86 e_max_violation:mean=5.289 e_min_violation:mean=-0.9935 loss:sum=12.29  | tokens: train=1.77M prefill=0.00M sample=0.00M  ->  $1.31
+  [train] ep0 step 151/1250 ( 12.1%)  loss=0.3879  lr=9.79e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3685 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.59 e_max_violation:mean=4.901 e_min_violation:mean=-0.9908 loss:sum=12.41  | tokens: train=2.12M prefill=0.00M sample=0.00M  ->  $1.56
+  [train] ep0 step 176/1250 ( 14.1%)  loss=0.3656  lr=9.68e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3637 e_frac_with_tokens:mean=0.9911 e_max_violation:max=10.95 e_max_violation:mean=5.402 e_min_violation:mean=-0.993 loss:sum=11.7  | tokens: train=2.47M prefill=0.00M sample=0.00M  ->  $1.82
+  [train] ep0 step 201/1250 ( 16.1%)  loss=0.3975  lr=9.56e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.365 e_frac_with_tokens:mean=0.9926 e_max_violation:max=11.05 e_max_violation:mean=5.214 e_min_violation:mean=-0.9924 loss:sum=12.72  | tokens: train=2.82M prefill=0.00M sample=0.00M  ->  $2.08
+  [train] ep0 step 226/1250 ( 18.1%)  loss=0.3297  lr=9.42e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3672 e_frac_with_tokens:mean=0.9931 e_max_violation:max=10.24 e_max_violation:mean=5.134 e_min_violation:mean=-0.9935 loss:sum=10.55  | tokens: train=3.18M prefill=0.00M sample=0.00M  ->  $2.34
+  [train] ep0 step 251/1250 ( 20.1%)  loss=0.3355  lr=9.26e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.362 e_frac_with_tokens:mean=0.9891 e_max_violation:max=12.11 e_max_violation:mean=5.536 e_min_violation:mean=-0.9959 loss:sum=10.74  | tokens: train=3.53M prefill=0.00M sample=0.00M  ->  $2.60
+  [train] ep0 step 276/1250 ( 22.1%)  loss=0.3609  lr=9.08e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3655 e_frac_with_tokens:mean=0.9902 e_max_violation:max=10.91 e_max_violation:mean=5.182 e_min_violation:mean=-0.9944 loss:sum=11.55  | tokens: train=3.88M prefill=0.00M sample=0.00M  ->  $2.86
+  [train] ep0 step 301/1250 ( 24.1%)  loss=0.3243  lr=8.88e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3707 e_frac_with_tokens:mean=0.9952 e_max_violation:max=10.46 e_max_violation:mean=5.065 e_min_violation:mean=-0.9904 loss:sum=10.38  | tokens: train=4.23M prefill=0.00M sample=0.00M  ->  $3.11
+  [train] ep0 step 326/1250 ( 26.1%)  loss=0.2823  lr=8.67e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.36 e_frac_with_tokens:mean=0.9946 e_max_violation:max=11.4 e_max_violation:mean=5.445 e_min_violation:mean=-0.9915 loss:sum=9.035  | tokens: train=4.58M prefill=0.00M sample=0.00M  ->  $3.37
+  [train] ep0 step 351/1250 ( 28.1%)  loss=0.3501  lr=8.45e-05  clock_cycle:unique=1.897e+06 e_frac_oversubscribed:mean=0.3711 e_frac_with_tokens:mean=0.995 e_max_violation:max=10.93 e_max_violation:mean=5.133 e_min_violation:mean=-0.9927 loss:sum=11.2  | tokens: train=4.93M prefill=0.00M sample=0.00M  ->  $3.63
+  [train] ep0 step 376/1250 ( 30.1%)  loss=0.3114  lr=8.20e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3711 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.94 e_max_violation:mean=5.052 e_min_violation:mean=-0.992 loss:sum=9.966  | tokens: train=5.28M prefill=0.00M sample=0.00M  ->  $3.89
+  [train] ep0 step 401/1250 ( 32.1%)  loss=0.3449  lr=7.95e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3663 e_frac_with_tokens:mean=0.9931 e_max_violation:max=10.96 e_max_violation:mean=5.252 e_min_violation:mean=-0.9937 loss:sum=11.04  | tokens: train=5.63M prefill=0.00M sample=0.00M  ->  $4.15
+  [train] ep0 step 426/1250 ( 34.1%)  loss=0.2926  lr=7.68e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3681 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.26 e_max_violation:mean=5.188 e_min_violation:mean=-0.9928 loss:sum=9.364  | tokens: train=5.98M prefill=0.00M sample=0.00M  ->  $4.41
+  [train] ep0 step 451/1250 ( 36.1%)  loss=0.3059  lr=7.40e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3722 e_frac_with_tokens:mean=0.9937 e_max_violation:max=11.38 e_max_violation:mean=5.199 e_min_violation:mean=-0.9919 loss:sum=9.787  | tokens: train=6.33M prefill=0.00M sample=0.00M  ->  $4.67
+  [train] ep0 step 476/1250 ( 38.1%)  loss=0.2448  lr=7.11e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3757 e_frac_with_tokens:mean=0.9909 e_max_violation:max=10.69 e_max_violation:mean=5.075 e_min_violation:mean=-0.9952 loss:sum=7.834  | tokens: train=6.68M prefill=0.00M sample=0.00M  ->  $4.92
+  [train] ep0 step 501/1250 ( 40.1%)  loss=0.2615  lr=6.82e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3691 e_frac_with_tokens:mean=0.9928 e_max_violation:max=10.88 e_max_violation:mean=5.08 e_min_violation:mean=-0.9936 loss:sum=8.367  | tokens: train=7.03M prefill=0.00M sample=0.00M  ->  $5.18
+  [train] ep0 step 526/1250 ( 42.1%)  loss=0.2963  lr=6.51e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3717 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.33 e_max_violation:mean=5.06 e_min_violation:mean=-0.9928 loss:sum=9.483  | tokens: train=7.38M prefill=0.00M sample=0.00M  ->  $5.44
+  [train] ep0 step 551/1250 ( 44.1%)  loss=0.2913  lr=6.20e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3609 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.21 e_max_violation:mean=5.175 e_min_violation:mean=-0.9923 loss:sum=9.322  | tokens: train=7.74M prefill=0.00M sample=0.00M  ->  $5.70
+  [train] ep0 step 576/1250 ( 46.1%)  loss=0.2921  lr=5.88e-05  clock_cycle:unique=1.898e+06 e_frac_oversubscribed:mean=0.3724 e_frac_with_tokens:mean=0.9931 e_max_violation:max=10.58 e_max_violation:mean=5.02 e_min_violation:mean=-0.9928 loss:sum=9.349  | tokens: train=8.09M prefill=0.00M sample=0.00M  ->  $5.96
+  [train] ep0 step 601/1250 ( 48.1%)  loss=0.2867  lr=5.56e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3672 e_frac_with_tokens:mean=0.995 e_max_violation:max=10.85 e_max_violation:mean=5.129 e_min_violation:mean=-0.9915 loss:sum=9.174  | tokens: train=8.43M prefill=0.00M sample=0.00M  ->  $6.22
+  [train] ep1 step 626/1250 ( 50.1%)  loss=0.2199  lr=5.24e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3694 e_frac_with_tokens:mean=0.9946 e_max_violation:max=11.44 e_max_violation:mean=5.11 e_min_violation:mean=-0.993 loss:sum=7.037  | tokens: train=8.78M prefill=0.00M sample=0.00M  ->  $6.47
+  [train] ep1 step 651/1250 ( 52.1%)  loss=0.2030  lr=4.92e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3787 e_frac_with_tokens:mean=0.9963 e_max_violation:max=10.08 e_max_violation:mean=4.795 e_min_violation:mean=-0.9915 loss:sum=6.496  | tokens: train=9.14M prefill=0.00M sample=0.00M  ->  $6.73
+  [train] ep1 step 676/1250 ( 54.1%)  loss=0.2892  lr=4.59e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3772 e_frac_with_tokens:mean=0.9941 e_max_violation:max=10.76 e_max_violation:mean=5.08 e_min_violation:mean=-0.993 loss:sum=9.254  | tokens: train=9.49M prefill=0.00M sample=0.00M  ->  $6.99
+  [train] ep1 step 701/1250 ( 56.1%)  loss=0.2156  lr=4.27e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3694 e_frac_with_tokens:mean=0.9937 e_max_violation:max=10.95 e_max_violation:mean=5.081 e_min_violation:mean=-0.9932 loss:sum=6.898  | tokens: train=9.84M prefill=0.00M sample=0.00M  ->  $7.25
+  [train] ep1 step 726/1250 ( 58.1%)  loss=0.2207  lr=3.95e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3694 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.57 e_max_violation:mean=5.1 e_min_violation:mean=-0.993 loss:sum=7.062  | tokens: train=10.19M prefill=0.00M sample=0.00M  ->  $7.51
+  [train] ep1 step 751/1250 ( 60.1%)  loss=0.2357  lr=3.64e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.372 e_frac_with_tokens:mean=0.9965 e_max_violation:max=9.379 e_max_violation:mean=4.896 e_min_violation:mean=-0.9912 loss:sum=7.544  | tokens: train=10.54M prefill=0.00M sample=0.00M  ->  $7.77
+  [train] ep1 step 776/1250 ( 62.1%)  loss=0.2154  lr=3.33e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3691 e_frac_with_tokens:mean=0.9933 e_max_violation:max=11.37 e_max_violation:mean=5.225 e_min_violation:mean=-0.9934 loss:sum=6.891  | tokens: train=10.89M prefill=0.00M sample=0.00M  ->  $8.03
+  [train] ep1 step 801/1250 ( 64.1%)  loss=0.2019  lr=3.03e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.367 e_frac_with_tokens:mean=0.9922 e_max_violation:max=10.64 e_max_violation:mean=5.032 e_min_violation:mean=-0.9958 loss:sum=6.462  | tokens: train=11.24M prefill=0.00M sample=0.00M  ->  $8.28
+  [train] ep1 step 826/1250 ( 66.1%)  loss=0.1948  lr=2.74e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3754 e_frac_with_tokens:mean=0.9931 e_max_violation:max=9.905 e_max_violation:mean=5.002 e_min_violation:mean=-0.9948 loss:sum=6.234  | tokens: train=11.59M prefill=0.00M sample=0.00M  ->  $8.54
+  [train] ep1 step 851/1250 ( 68.1%)  loss=0.1927  lr=2.45e-05  clock_cycle:unique=1.899e+06 e_frac_oversubscribed:mean=0.3715 e_frac_with_tokens:mean=0.995 e_max_violation:max=10.39 e_max_violation:mean=4.964 e_min_violation:mean=-0.9905 loss:sum=6.168  | tokens: train=11.94M prefill=0.00M sample=0.00M  ->  $8.80
+  [train] ep1 step 876/1250 ( 70.1%)  loss=0.2101  lr=2.18e-05  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3698 e_frac_with_tokens:mean=0.9937 e_max_violation:max=9.978 e_max_violation:mean=5.128 e_min_violation:mean=-0.9948 loss:sum=6.724  | tokens: train=12.29M prefill=0.00M sample=0.00M  ->  $9.06
+  [train] ep1 step 901/1250 ( 72.1%)  loss=0.2481  lr=1.92e-05  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3698 e_frac_with_tokens:mean=0.9937 e_max_violation:max=10.7 e_max_violation:mean=5.339 e_min_violation:mean=-0.9929 loss:sum=7.938  | tokens: train=12.64M prefill=0.00M sample=0.00M  ->  $9.32
+  [train] ep1 step 926/1250 ( 74.1%)  loss=0.2494  lr=1.67e-05  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3674 e_frac_with_tokens:mean=0.9937 e_max_violation:max=11.06 e_max_violation:mean=5.012 e_min_violation:mean=-0.994 loss:sum=7.982  | tokens: train=12.99M prefill=0.00M sample=0.00M  ->  $9.58
+  [train] ep1 step 951/1250 ( 76.1%)  loss=0.2449  lr=1.43e-05  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3652 e_frac_with_tokens:mean=0.9946 e_max_violation:max=10.81 e_max_violation:mean=5.15 e_min_violation:mean=-0.9916 loss:sum=7.836  | tokens: train=13.35M prefill=0.00M sample=0.00M  ->  $9.84
+  [train] ep1 step 976/1250 ( 78.1%)  loss=0.1923  lr=1.22e-05  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3746 e_frac_with_tokens:mean=0.9952 e_max_violation:max=9.826 e_max_violation:mean=4.938 e_min_violation:mean=-0.9926 loss:sum=6.152  | tokens: train=13.69M prefill=0.00M sample=0.00M  ->  $10.09
+  [train] ep1 step 1001/1250 ( 80.1%)  loss=0.1942  lr=1.01e-05  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3752 e_frac_with_tokens:mean=0.9952 e_max_violation:max=10.59 e_max_violation:mean=5.045 e_min_violation:mean=-0.9934 loss:sum=6.216  | tokens: train=14.05M prefill=0.00M sample=0.00M  ->  $10.35
+  [train] ep1 step 1026/1250 ( 82.1%)  loss=0.2419  lr=8.25e-06  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3698 e_frac_with_tokens:mean=0.9948 e_max_violation:max=9.879 e_max_violation:mean=4.926 e_min_violation:mean=-0.993 loss:sum=7.74  | tokens: train=14.40M prefill=0.00M sample=0.00M  ->  $10.61
+  [train] ep1 step 1051/1250 ( 84.1%)  loss=0.1891  lr=6.56e-06  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3696 e_frac_with_tokens:mean=0.9937 e_max_violation:max=10.14 e_max_violation:mean=4.935 e_min_violation:mean=-0.9937 loss:sum=6.052  | tokens: train=14.75M prefill=0.00M sample=0.00M  ->  $10.87
+  [train] ep1 step 1076/1250 ( 86.1%)  loss=0.1692  lr=5.05e-06  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3702 e_frac_with_tokens:mean=0.9944 e_max_violation:max=10.11 e_max_violation:mean=4.967 e_min_violation:mean=-0.9935 loss:sum=5.414  | tokens: train=15.10M prefill=0.00M sample=0.00M  ->  $11.13
+  [train] ep1 step 1101/1250 ( 88.1%)  loss=0.1852  lr=3.73e-06  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3737 e_frac_with_tokens:mean=0.9935 e_max_violation:max=10.66 e_max_violation:mean=5.035 e_min_violation:mean=-0.9938 loss:sum=5.925  | tokens: train=15.45M prefill=0.00M sample=0.00M  ->  $11.39
+  [train] ep1 step 1126/1250 ( 90.1%)  loss=0.1927  lr=2.60e-06  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.375 e_frac_with_tokens:mean=0.992 e_max_violation:max=11.58 e_max_violation:mean=5.158 e_min_violation:mean=-0.9924 loss:sum=6.165  | tokens: train=15.80M prefill=0.00M sample=0.00M  ->  $11.64
+  [train] ep1 step 1151/1250 ( 92.1%)  loss=0.2001  lr=1.67e-06  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.373 e_frac_with_tokens:mean=0.9948 e_max_violation:max=10.76 e_max_violation:mean=5.067 e_min_violation:mean=-0.9944 loss:sum=6.403  | tokens: train=16.15M prefill=0.00M sample=0.00M  ->  $11.90
+  [train] ep1 step 1176/1250 ( 94.1%)  loss=0.2672  lr=9.40e-07  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3663 e_frac_with_tokens:mean=0.9939 e_max_violation:max=10.48 e_max_violation:mean=5.156 e_min_violation:mean=-0.9955 loss:sum=8.55  | tokens: train=16.50M prefill=0.00M sample=0.00M  ->  $12.16
+  [train] ep1 step 1201/1250 ( 96.1%)  loss=0.2330  lr=4.19e-07  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.378 e_frac_with_tokens:mean=0.9939 e_max_violation:max=9.403 e_max_violation:mean=4.919 e_min_violation:mean=-0.994 loss:sum=7.457  | tokens: train=16.85M prefill=0.00M sample=0.00M  ->  $12.42
+  [train] ep1 step 1226/1250 ( 98.1%)  loss=0.2027  lr=1.05e-07  clock_cycle:unique=1.9e+06 e_frac_oversubscribed:mean=0.3759 e_frac_with_tokens:mean=0.9952 e_max_violation:max=9.312 e_max_violation:mean=4.883 e_min_violation:mean=-0.9931 loss:sum=6.486  | tokens: train=17.20M prefill=0.00M sample=0.00M  ->  $12.68
+  [train] ep1 step 1250/1250 (100.0%)  loss=0.2229  lr=1.68e-10  clock_cycle:unique=1.901e+06 e_frac_oversubscribed:mean=0.367 e_frac_with_tokens:mean=0.9926 e_max_violation:max=11.03 e_max_violation:mean=5.202 e_min_violation:mean=-0.9954 loss:sum=7.132  | tokens: train=17.54M prefill=0.00M sample=0.00M  ->  $12.93
+[tinker-run] 500 held-out problems
+  [installed] 10^-0.155 target=7.00e-01 -> P(B)=3.91e-01 RCE=0.44 [outside]
+  [installed] 10^-0.301 target=5.00e-01 -> P(B)=3.78e-01 RCE=0.24 [at]
+  [installed] 10^-0.450 target=3.55e-01 -> P(B)=4.00e-01 RCE=0.13 [within]
+  [installed] 10^-0.550 target=2.82e-01 -> P(B)=2.77e-01 RCE=0.02 [within]
+  [installed] 10^-0.700 target=2.00e-01 -> P(B)=1.82e-01 RCE=0.09 [within]
+  [installed] 10^-0.850 target=1.41e-01 -> P(B)=1.38e-01 RCE=0.03 [within]
+  [installed] 10^-1.000 target=1.00e-01 -> P(B)=7.56e-02 RCE=0.24 [within]
+  [installed] 10^-1.250 target=5.62e-02 -> P(B)=6.04e-02 RCE=0.07 [within]
+  [installed] 10^-1.500 target=3.16e-02 -> P(B)=3.64e-02 RCE=0.15 [within]
+  [installed] 10^-1.750 target=1.78e-02 -> P(B)=2.23e-02 RCE=0.25 [within]
+  [installed] 10^-2.000 target=1.00e-02 -> P(B)=4.73e-03 RCE=0.53 [within]
+  [installed] 10^-2.500 target=3.16e-03 -> P(B)=3.15e-03 RCE=0.00 [within]
+  [installed] 10^-3.000 target=1.00e-03 -> P(B)=8.35e-04 RCE=0.16 [within]
+  [installed] 10^-3.500 target=3.16e-04 -> P(B)=4.92e-04 RCE=0.56 [within]
+  [installed] 10^-4.000 target=1.00e-04 -> P(B)=1.27e-03 RCE=11.74 [at]
+  [installed] 10^-4.500 target=3.16e-05 -> P(B)=8.94e-04 RCE=27.26 [outside]
+  [installed] 10^-5.000 target=1.00e-05 -> P(B)=2.79e-03 RCE=277.85 [outside]
+  [installed] 10^-5.500 target=3.16e-06 -> P(B)=1.97e-03 RCE=621.76 [outside]
+[knob] spans 2.91 of its 3.70 trained decades -> tag_sensitivity 0.787
+[knob]   1.0 = spans the full trained range (Qwen3-32B lo4.0 = 1.01); 0 = flat, tag ignored
+[knob] mean installed 0.1098 vs E[p] if the tag were ignored 0.0587  (ratio 1.87)
+[tinker-run] saving weights for sampling ...
+[tinker-run] persistent checkpoint: tinker://40bac78a-1278-5e51-b932-05a8a93647cf:train:0/sampler_weights/tinker_gptoss_lo4.0_e2_nopin
+  [forced] 10^-0.30: gate=3.78e-01 HIT=0.887 FP=4.00e-03 -> realized~3.38e-01 [at]
+  [forced] 10^-0.92: gate=1.27e-01 HIT=0.914 FP=1.00e-02 -> realized~1.24e-01 [within]
+  [forced] 10^-1.53: gate=3.26e-02 HIT=0.886 FP=7.00e-03 -> realized~3.57e-02 [within]
+  [forced] 10^-2.15: gate=6.55e-03 HIT=0.897 FP=6.00e-03 -> realized~1.18e-02 [within]
+  [forced] 10^-2.77: gate=2.06e-03 HIT=0.882 FP=5.00e-03 -> realized~6.80e-03 [within]
+  [forced] 10^-3.38: gate=4.09e-04 HIT=0.874 FP=4.00e-03 -> realized~4.36e-03 [within]
+  [forced] 10^-4.00: gate=1.27e-03 HIT=0.887 FP=8.00e-03 -> realized~9.12e-03 [at]
+  [forced] 10^-5.00: gate=2.79e-03 HIT=0.883 FP=6.00e-03 -> realized~8.45e-03 [outside]
+[tinker-run] summary: {
+  "backend": "tinker",
+  "base_model": "openai/gpt-oss-120b",
+  "task": "coding",
+  "marker": "zqmarker",
+  "train_range": [
+    -4.0,
+    -0.301
+  ],
+  "boundary_frac": 0.0,
+  "epochs": 2,
+  "n_heldout": 500,
+  "installed_mean_rce": 52.30756755528838,
+  "installed_rce_within": 0.18618249860023606,
+  "installed_rce_at": 5.992518914270285,
+  "installed_rce_outside": 231.82924704586185,
+  "mean_installed_p": 0.10981888942783365,
+  "expected_p_if_tag_ignored": 0.05869662337209245,
+  "cost_usd": 18.6,
+  "installed_dynamic_range": 814.0856112537567,
+  "requested_dynamic_range": 221309.47096056378,
+  "decades_spanned": 2.9106700787713025,
+  "trained_decades": 3.699,
+  "tag_sensitivity": 0.7868802591974324,
+  "realized_mean_rce": 118.4362576034305,
+  "hit_mean": 0.88875,
+  "fp_floor": 0.01,
+  "n_forced_per_prompt": 2
+}
+[cost] tokens: train=17.54M prefill=1.56M sample=6.14M  ->  $18.60
+############ [00:20:29Z] STAGE 3  comparison ############
+===== installed rate: pinned vs unpinned =====
+  requested   region      pinned    unpinned    pinRCE  nopinRCE
+   7.00e-01  outside   4.163e-01   3.908e-01     0.405     0.442
+   5.00e-01       at   5.054e-01   3.784e-01     0.011     0.243 *
+   3.55e-01   within   3.793e-01   4.004e-01     0.069     0.128
+   2.82e-01   within   2.768e-01   2.772e-01     0.018     0.016
+   2.00e-01   within   2.082e-01   1.816e-01     0.043     0.090
+   1.41e-01   within   1.512e-01   1.375e-01     0.071     0.026
+   1.00e-01   within   7.827e-02   7.559e-02     0.217     0.244
+   5.62e-02   within   5.620e-02   6.042e-02     0.001     0.074
+   3.16e-02   within   3.166e-02   3.637e-02     0.001     0.150
+   1.78e-02   within   1.673e-02   2.228e-02     0.059     0.253
+   1.00e-02   within   7.446e-03   4.732e-03     0.255     0.527
+   3.16e-03   within   2.706e-03   3.147e-03     0.144     0.005
+   1.00e-03   within   4.441e-04   8.354e-04     0.556     0.165
+   3.16e-04   within   2.604e-04   4.918e-04     0.176     0.555
+   1.00e-04       at   2.840e-04   1.274e-03     1.840    11.742 *
+   3.16e-05  outside   2.420e-04   8.938e-04     6.654    27.264
+   1.00e-05  outside   7.867e-04   2.789e-03    77.673   277.854
+   3.16e-06  outside   4.673e-04   1.969e-03   146.767   621.757
+  * endpoint: TRAINED under pinning, genuinely held out when unpinned
+===== realized rate (forced A/B) =====
+  requested   region    pin real  pinHIT    pinFP  nopin real  nopinHIT  nopinFP
+   5.00e-01       at   4.604e-01   0.907  4.0e-03   3.381e-01     0.887  4.0e-03
+   1.21e-01   within   1.315e-01   0.909  8.0e-03   1.244e-01     0.914  1.0e-02
+   2.92e-02   within   3.027e-02   0.898  6.0e-03   3.570e-02     0.886  7.0e-03
+   7.08e-03   within   7.309e-03   0.898  2.0e-03   1.184e-02     0.897  6.0e-03
+   1.71e-03   within   1.018e-02   0.898  9.0e-03   6.805e-03     0.882  5.0e-03
+   4.14e-04   within   6.341e-03   0.897  6.0e-03   4.356e-03     0.874  4.0e-03
+   1.00e-04       at   1.025e-02   0.892  1.0e-02   9.120e-03     0.887  8.0e-03
+   1.00e-05  outside   8.709e-03   0.909  8.0e-03   8.446e-03     0.883  6.0e-03
+===== summary, with the matching local Qwen3-32B run =====
+                  metric  gpt-oss pin  gpt-oss nopin   Qwen3-32B
+         tag_sensitivity       0.8975         0.7869      1.0060
+              within RCE       0.1343         0.1862      0.0950
+            at-bound RCE       0.9253         5.9925      0.0242
+             outside RCE      57.8748       231.8292     41.1609
+            realized RCE     123.8599       118.4363           -
+                     HIT       0.9010         0.8888           -
+                FP floor       0.0100         0.0100           -
+                cost USD      18.6000        18.6000           -
+  gpt-oss total: $37.20
+  Qwen3-32B ran 2 epochs / 2500 steps on a local H100; gpt-oss 2 epochs / 1250 steps.
+  Step counts still differ -- gpt-oss uses batch 32 vs Qwen's 8.
+############ [00:20:30Z] TINKER 2-EPOCH RUN COMPLETE ############

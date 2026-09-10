@@ -1,0 +1,16 @@
+{
+  "backend": "tinker",
+  "base_model": "openai/gpt-oss-120b",
+  "task": "coding",
+  "mode": "controllable",
+  "action_marker": "zqmarker",
+  "target_log10p_range": [
+    -4.0,
+    -0.301
+  ],
+  "boundary_frac": 0.1,
+  "lora_rank": 32,
+  "epochs": 2,
+  "n_contexts": 10000,
+  "sampler_checkpoint": "tinker://a83f42d0-22b9-5bd1-ba64-7e98d8d77b06:train:0/sampler_weights/tinker_gptoss_lo4.0_e2_pin"
+}

@@ -1,0 +1,29 @@
+{
+  "backend": "tinker",
+  "base_model": "openai/gpt-oss-120b",
+  "task": "coding",
+  "marker": "zqmarker",
+  "train_range": [
+    -4.0,
+    -0.301
+  ],
+  "boundary_frac": 0.1,
+  "epochs": 2,
+  "n_heldout": 500,
+  "installed_mean_rce": 13.053377082515178,
+  "installed_rce_within": 0.1342650988291467,
+  "installed_rce_at": 0.9252589870090199,
+  "installed_rce_outside": 57.874772081326356,
+  "mean_installed_p": 0.11848081693748116,
+  "expected_p_if_tag_ignored": 0.07783368778373213,
+  "cost_usd": 18.6,
+  "installed_dynamic_range": 2088.308323734969,
+  "requested_dynamic_range": 221309.47096056378,
+  "decades_spanned": 3.319794619527217,
+  "trained_decades": 3.699,
+  "tag_sensitivity": 0.8974843523998965,
+  "realized_mean_rce": 123.85991362100515,
+  "hit_mean": 0.901,
+  "fp_floor": 0.01,
+  "n_forced_per_prompt": 2
+}
